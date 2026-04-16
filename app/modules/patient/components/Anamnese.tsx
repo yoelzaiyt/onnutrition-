@@ -199,7 +199,9 @@ export default function Anamnese({
           <FileText className="w-5 h-5" />
           ANAMNESE COMPLETA - NOVA VERSÃO 2025
         </h3>
-        <p className="text-white/70 text-sm">Avaliação nutricional integrada</p>
+        <p className="text-white/70 text-sm">
+          ⭐ Avaliação nutricional integrada - ATUALIZADO HOJE ⭐
+        </p>
       </div>
 
       <div className="space-y-2">
