@@ -73,6 +73,17 @@ export const SUBSCRIPTION_PLANS = {
       "Plano alimentar básico",
     ],
   },
+  simbolico: {
+    name: "Simbólico",
+    price: 1.0,
+    features: [
+      "Acesso completo",
+      "Todos os cursos",
+      "IA Educacional",
+      "ON Scan 3D",
+      "Suporte prioritário",
+    ],
+  },
   premium: {
     name: "Premium",
     price: 49.9,
