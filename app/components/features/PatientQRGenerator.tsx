@@ -69,55 +69,56 @@ const generateQRUrl = (token: string, nutriEmail: string) => {
   return `${baseUrl}/access/${token}?nutri=${encodeURIComponent(nutriEmail)}`;
 };
 
-const generateQRCodeImage = async (text: string): Promise<string> => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const size = 300;
-    canvas.width = size;
-    canvas.height = size;
+const generateQRCodeImage = (text: string): string => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const size = 300;
+  canvas.width = size;
+  canvas.height = size;
 
-    if (ctx) {
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, size, size);
+  if (ctx) {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, size, size);
 
-      ctx.fillStyle = "#0B2B24";
-      ctx.font = "12px monospace";
+    const hash = text
+      .split("")
+      .reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+    const moduleCount = 25;
+    const moduleSize = (size - 40) / moduleCount;
+    const margin = 20;
 
-      const chars = text.split("");
-      const cellSize = 8;
-      const cols = Math.floor(size / cellSize);
-      const rows = Math.floor(size / cellSize);
-      const hash = text
-        .split("")
-        .reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
+    ctx.fillStyle = "#0B2B24";
 
-      for (let row = 0; row < rows - 4; row++) {
-        for (let col = 0; col < cols - 4; col++) {
-          const idx = row * cols + col;
-          const val = Math.abs((hash >> (idx % 31)) & 1);
-          if (idx > 20 && idx < cols * rows - 20 && col > 2 && col < cols - 3) {
-            if ((col + row + hash) % 3 === 0 || (val && col % 2 === 0)) {
-              ctx.fillRect(
-                col * cellSize + 16,
-                row * cellSize + 16,
-                cellSize - 1,
-                cellSize - 1,
-              );
-            }
+    for (let row = 0; row < moduleCount; row++) {
+      for (let col = 0; col < moduleCount; col++) {
+        const idx = row * moduleCount + col;
+        const hashVal = Math.abs((hash + idx * 17) % 3);
+
+        if (
+          hashVal === 0 ||
+          (col < 7 && row < 7) ||
+          (col >= moduleCount - 7 && row < 7) ||
+          (col < 7 && row >= moduleCount - 7)
+        ) {
+          if (idx % 3 !== 2) {
+            ctx.fillRect(
+              margin + col * moduleSize,
+              margin + row * moduleSize,
+              moduleSize - 1,
+              moduleSize - 1,
+            );
           }
         }
       }
-
-      ctx.fillStyle = "#0B2B24";
-      ctx.fillRect(16, 16, size - 32, 24);
-      ctx.fillRect(16, size - 40, size - 32, 24);
-      ctx.fillRect(16, 16, 24, size - 32);
-      ctx.fillRect(size - 40, 16, 24, size - 32);
     }
 
-    resolve(canvas.toDataURL("image/png"));
-  });
+    ctx.fillStyle = "#0B2B24";
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("ONutrition", size / 2, size - 20);
+  }
+
+  return canvas.toDataURL("image/png");
 };
 
 export default function PatientQRGenerator({
@@ -158,6 +159,9 @@ export default function PatientQRGenerator({
     if (!patientName.trim()) return;
 
     setIsGenerating(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     try {
       const token = generateUniqueToken();
       const expiresAt =
@@ -168,7 +172,7 @@ export default function PatientQRGenerator({
             : undefined;
 
       const qrUrl = generateQRUrl(token, nutriId);
-      const qrDataUrl = await generateQRCodeImage(qrUrl);
+      const qrDataUrl = generateQRCodeImage(qrUrl);
 
       const newPatient: PatientAccess = {
         id: token,
