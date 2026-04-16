@@ -14,7 +14,6 @@ import FinancialModule from "@/app/components/features/FinancialModule";
 import PatientManagement from "@/app/components/features/PatientManagement";
 import PatientFlowManager from "@/app/components/features/PatientFlowManager";
 import PatientQRGenerator from "@/app/components/features/PatientQRGenerator";
-import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
 import PatientProfilePage from "@/app/modules/patient/PatientProfilePage";
 import Calendar from "@/app/components/ui/Calendar";
 import TopNav from "@/app/components/layout/TopNav";
@@ -43,8 +42,7 @@ export type AppView =
   | "children"
   | "generate-data"
   | "education"
-  | "patient-profile"
-  | "qr-generator";
+  | "patient-profile";
 
 const VIEW_LABELS: Record<AppView, string> = {
   landing: "",
@@ -65,7 +63,6 @@ const VIEW_LABELS: Record<AppView, string> = {
   "generate-data": "Gerar Dados de Teste",
   "patient-profile": "Profissional (Nutricionista)",
   education: "Educação",
-  "qr-generator": "Gerador QR Code",
 };
 
 const FULL_WIDTH_VIEWS: AppView[] = [
@@ -80,7 +77,6 @@ const FULL_WIDTH_VIEWS: AppView[] = [
   "children",
   "patient-profile",
   "education",
-  "qr-generator",
 ];
 
 export default function Home() {
@@ -322,12 +318,7 @@ export default function Home() {
                   onBack={() => setView("dashboard")}
                 />
               )}
-              {view === "anamnesis" && (
-                <AnamnesisWizard
-                  patientId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
+              {view === "anamnesis" && <PatientProfilePage />}
               {view === "calendar" && <Calendar />}
               {view === "finance" && <FinancialModule />}
               {view === "setup" && (
@@ -341,12 +332,6 @@ export default function Home() {
               )}
               {view === "patient-profile" && <PatientProfilePage />}
               {view === "education" && <PatientProfilePage />}
-              {view === "qr-generator" && (
-                <PatientQRGenerator
-                  nutriId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
             </motion.div>
           </AnimatePresence>
         </div>
