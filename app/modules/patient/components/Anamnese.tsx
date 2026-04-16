@@ -5,7 +5,6 @@ import {
   subscribeToCollection,
   addDocument,
   deleteDocument,
-  updateDocument,
 } from "@/app/lib/firestore-utils";
 import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
 import {
