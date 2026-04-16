@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
   Sparkles,
   GraduationCap,
+  QrCode,
 } from "lucide-react";
 import Logo from "@/app/components/ui/Logo";
 import type { AppView } from "@/app/page";
@@ -53,6 +54,7 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { id: "data", label: "Dados", icon: FileSpreadsheet },
+  { id: "qr-generator", label: "QR Code Paciente", icon: QrCode },
   {
     id: "patient-profile",
     label: "Educação & Inteligência Nutricional",
