@@ -30,7 +30,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "atender_pacientes",
     "acessar_modulo_profissional",
   ],
-  nutricionista: [
+  nutritionist: [
     "atender_pacientes",
     "criar_conteudos",
     "acessar_modulo_profissional",
