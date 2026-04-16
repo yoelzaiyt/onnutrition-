@@ -54,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { id: "data", label: "Dados", icon: FileSpreadsheet },
-  { id: "qr-generator", label: "QR Code Paciente", icon: QrCode },
+  { id: "qr-generator", label: "QR Code", icon: QrCode },
   {
     id: "patient-profile",
     label: "Educação & Inteligência Nutricional",
