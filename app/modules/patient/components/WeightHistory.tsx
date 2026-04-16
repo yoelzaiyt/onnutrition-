@@ -14,6 +14,12 @@ import {
   TrendingUp,
   Scale,
   Scan,
+  Heart,
+  Activity,
+  Ruler,
+  Target,
+  Flame,
+  Droplets,
 } from "lucide-react";
 import BodyScan3D from "./BodyScan3D";
 
@@ -25,6 +31,20 @@ interface WeightRecord {
   variation?: number;
   notes?: string;
   createdBy: string;
+  bodyFat?: number;
+  leanMass?: number;
+  imc?: number;
+  measurements?: {
+    arm?: number;
+    waist?: number;
+    hip?: number;
+    thigh?: number;
+    chest?: number;
+    neck?: number;
+    calf?: number;
+  };
+  risk?: string;
+  posture?: string;
 }
 
 export default function WeightHistory({
@@ -174,12 +194,13 @@ export default function WeightHistory({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                  <th className="p-4 border-b">Data</th>
-                  <th className="p-4 border-b">Peso (kg)</th>
-                  <th className="p-4 border-b">Meta</th>
-                  <th className="p-4 border-b">Variação</th>
-                  <th className="p-4 border-b">Observações</th>
-                  <th className="p-4 border-b text-right">Ações</th>
+                  <th className="p-3 border-b">Data</th>
+                  <th className="p-3 border-b">Peso</th>
+                  <th className="p-3 border-b">Gordura</th>
+                  <th className="p-3 border-b">IMC</th>
+                  <th className="p-3 border-b">Meta</th>
+                  <th className="p-3 border-b">Variação</th>
+                  <th className="p-3 border-b text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -194,13 +215,51 @@ export default function WeightHistory({
                         {new Date(record.date).toLocaleDateString("pt-BR")}
                       </div>
                     </td>
-                    <td className="p-4 font-medium text-gray-900">
+                    <td className="p-3 font-medium text-gray-900">
                       {record.weight} kg
                     </td>
-                    <td className="p-4 text-gray-600">
+                    <td className="p-3">
+                      {record.bodyFat ? (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            record.bodyFat < 20
+                              ? "bg-green-100 text-green-700"
+                              : record.bodyFat < 25
+                                ? "bg-blue-100 text-blue-700"
+                                : record.bodyFat < 30
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {record.bodyFat}%
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="p-3 text-gray-600">
+                      {record.imc ? (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            record.imc < 18.5
+                              ? "bg-yellow-100 text-yellow-700"
+                              : record.imc < 25
+                                ? "bg-green-100 text-green-700"
+                                : record.imc < 30
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {record.imc}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="p-3 text-gray-600">
                       {record.goalWeight ? `${record.goalWeight} kg` : "-"}
                     </td>
-                    <td className="p-4">
+                    <td className="p-3">
                       {record.variation !== undefined &&
                         record.variation !== 0 && (
                           <span
@@ -219,10 +278,7 @@ export default function WeightHistory({
                           </span>
                         )}
                     </td>
-                    <td className="p-4 text-gray-600 text-sm">
-                      {record.notes || "-"}
-                    </td>
-                    <td className="p-4 text-right">
+                    <td className="p-3 text-right">
                       <button
                         onClick={() => handleDelete(record.id)}
                         className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
