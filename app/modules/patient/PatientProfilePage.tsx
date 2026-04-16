@@ -80,18 +80,10 @@ const patientModules: ModuleCard[] = [
   },
   {
     id: "weight-history",
-    label: "Histórico de Peso",
+    label: "Histórico de Peso + ON Scan 3D",
     icon: Scale,
-    description: "Acompanhamento de peso",
+    description: "Acompanhamento de peso e avaliação corporal",
     color: "emerald",
-    hasData: false,
-  },
-  {
-    id: "body-scan",
-    label: "ON Scan 3D",
-    icon: Camera,
-    description: "Avaliação por fotos com IA",
-    color: "indigo",
     hasData: false,
   },
   {
