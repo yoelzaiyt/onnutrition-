@@ -61,7 +61,7 @@ const VIEW_LABELS: Record<AppView, string> = {
   data: "Importar / Exportar",
   children: "Módulo Infantil",
   "generate-data": "Gerar Dados de Teste",
-  "patient-profile": "Perfil do Paciente",
+  "patient-profile": "Profissional (Nutricionista)",
   education: "Educação Nutricional",
 };
 
