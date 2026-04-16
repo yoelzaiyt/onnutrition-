@@ -64,7 +64,7 @@ const VIEW_LABELS: Record<AppView, string> = {
   children: "Módulo Infantil",
   "generate-data": "Gerar Dados de Teste",
   "patient-profile": "Profissional (Nutricionista)",
-  education: "Educação Nutricional",
+  education: "Educação",
   "qr-generator": "Gerador QR Code",
 };
 
