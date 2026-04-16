@@ -339,19 +339,19 @@ export default function PatientProfilePage() {
         </div>
       </div>
 
-      <div className="flex gap-2 p-2 overflow-x-auto bg-white border-b">
+      <div className="flex gap-2 p-3 overflow-x-auto bg-white border-b">
         {allModules.slice(0, 10).map((module) => (
           <button
             key={module.id}
             onClick={() => handleModuleClick(module.id)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === module.id
-                ? "bg-[#22B391] text-white"
-                : "bg-gray-100 text-slate-600 hover:bg-gray-200"
+                ? "bg-[#22B391] text-white shadow-md"
+                : "bg-gray-100 text-slate-700 hover:bg-gray-200"
             }`}
           >
-            <module.icon className="w-4 h-4" />
-            {module.label}
+            <module.icon className="w-5 h-5" />
+            <span className="hidden sm:inline">{module.label}</span>
           </button>
         ))}
       </div>
