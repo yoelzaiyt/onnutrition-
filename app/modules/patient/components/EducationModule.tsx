@@ -233,38 +233,67 @@ const sampleArticles: Article[] = [
 const patientEducationalContent = [
   {
     id: "1",
-    title: "Como montar um prato equilibrado",
+    title: "Como Montar Prato Equilibrado",
+    description: "Guia passo a passo para refeição",
     type: "guide",
-    category: "Prático",
+    category: "Educação Aplicada",
     icon: "🍽️",
   },
   {
     id: "2",
-    title: "Entendendo gorduras",
+    title: "Entendendo Gorduras",
+    description: "Quais são saudáveis",
     type: "micro_lesson",
     category: "Nutrição",
     icon: "🧈",
   },
   {
     id: "3",
-    title: "Quanto proteína preciso?",
+    title: "Quanto Proteína Preciso?",
+    description: "Calculadora básica",
     type: "simulator",
     category: "Cálculo",
     icon: "💪",
   },
   {
     id: "4",
-    title: "Por que vary fiber?",
+    title: "Por que Fiber?",
+    description: "Benefícios das fibras",
     type: "insight",
     category: "Saúde",
     icon: "🌾",
   },
   {
     id: "5",
-    title: "Água: quanto beber?",
+    title: "Água: Quanto Beber?",
+    description: "Calculadora de hidratação",
     type: "simulator",
     category: "Hidratação",
     icon: "💧",
+  },
+  {
+    id: "6",
+    title: "Escolhas em Restaurantes",
+    description: "Dicas para comer fora",
+    type: "guide",
+    category: "Educação Aplicada",
+    icon: "🍴",
+  },
+  {
+    id: "7",
+    title: "Leitura de Rótulos",
+    description: "Como interpretar ingredientes",
+    type: "guide",
+    category: "Educação Aplicada",
+    icon: "🏷️",
+  },
+  {
+    id: "8",
+    title: "Substituições Saudáveis",
+    description: "Alternativas aos alimentos",
+    type: "guide",
+    category: "Educação Aplicada",
+    icon: "🔄",
   },
 ];
 
@@ -287,8 +316,9 @@ export default function EducationModule() {
     { id: "courses", label: "Cursos", icon: GraduationCap },
     { id: "discoveries", label: "Descobertas", icon: Lightbulb },
     { id: "library", label: "Biblioteca", icon: BookOpen },
-    { id: "learn", label: "Aprender", icon: Play },
+    { id: "learn", label: "Prático", icon: Play },
     { id: "assistant", label: "Assistente IA", icon: Brain },
+    { id: "progress", label: "Meu Progresso", icon: TrendingUp },
   ];
 
   const professionalTabs = [
@@ -431,6 +461,12 @@ export default function EducationModule() {
               <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                 {course.description}
               </p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-[#22B391] h-2 rounded-full"
+                  style={{ width: `${getCourseProgress(course.id)}%` }}
+                />
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1 text-gray-500">
                   <Clock className="w-4 h-4" /> {course.duration}
@@ -577,13 +613,13 @@ export default function EducationModule() {
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl">
+      <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
         <div className="flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-          <p className="text-sm text-yellow-700">
-            <strong>Importante:</strong> Sou um assistente educacional, não
-            posso prescrever dietas nem fazer diagnósticos. Para orientação
-            personalizada, consulte um nutricionista!
+          <Shield className="w-5 h-5 text-red-600 mt-0.5" />
+          <p className="text-sm text-red-700">
+            <strong>⚠️ Importante:</strong> Sou um assistente educacional. Não
+            prescrevo dietas, planos alimentares ou diagnósticos. Para
+            orientação personalizada, consulte seu nutricionista!
           </p>
         </div>
       </div>
@@ -636,6 +672,76 @@ export default function EducationModule() {
     </div>
   );
 
+  const renderProgressTab = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl">
+          <GraduationCap className="w-8 h-8 text-green-600 mb-2" />
+          <p className="text-2xl font-black text-green-700">3</p>
+          <p className="text-xs text-green-600">Cursos Concluídos</p>
+        </div>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl">
+          <Clock className="w-8 h-8 text-blue-600 mb-2" />
+          <p className="text-2xl font-black text-blue-700">12h</p>
+          <p className="text-xs text-blue-600">Tempo de Estudo</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl">
+          <BookOpen className="w-8 h-8 text-purple-600 mb-2" />
+          <p className="text-2xl font-black text-purple-700">24</p>
+          <p className="text-xs text-purple-600">Conteúdos Acessados</p>
+        </div>
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl">
+          <Award className="w-8 h-8 text-orange-600 mb-2" />
+          <p className="text-2xl font-black text-orange-700">2</p>
+          <p className="text-xs text-orange-600">Certificados</p>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl border border-gray-200">
+        <h4 className="font-bold text-gray-900 mb-4">
+          Próximo Conteúdo Recomendado
+        </h4>
+        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <div className="w-12 h-12 bg-[#22B391] rounded-xl flex items-center justify-center">
+            <ArrowRight className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <h5 className="font-medium text-gray-900">Nutrição Avançada</h5>
+            <p className="text-sm text-gray-500">Continue para desbloquear</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-2xl border border-amber-200">
+        <div className="flex items-center gap-3">
+          <Award className="w-8 h-8 text-amber-500" />
+          <div>
+            <h4 className="font-bold text-amber-800">
+              Conquistas Desbloqueadas
+            </h4>
+            <p className="text-sm text-amber-700">
+              Continue aprendendo para ganhar!
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="p-3 bg-white rounded-xl text-center opacity-50">
+            <span className="text-2xl">🌱</span>
+            <p className="text-xs">Iniciante</p>
+          </div>
+          <div className="p-3 bg-white rounded-xl text-center opacity-50">
+            <span className="text-2xl">📚</span>
+            <p className="text-xs">Leitor</p>
+          </div>
+          <div className="p-3 bg-white rounded-xl text-center opacity-50">
+            <span className="text-2xl">🏆</span>
+            <p className="text-xs">Mestre</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case "courses":
@@ -648,6 +754,8 @@ export default function EducationModule() {
         return renderLearnTab();
       case "assistant":
         return renderAssistantTab();
+      case "progress":
+        return renderProgressTab();
       default:
         return renderCoursesTab();
     }
