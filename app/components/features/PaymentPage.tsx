@@ -21,7 +21,7 @@ interface PaymentPageProps {
 
 const PIX_KEY = "31434686884";
 const PIX_NAME = "CASSIA NASCIMENTO OLIVEIRA";
-const PIX_BANK = "Banco do Brasil";
+const PIX_BANK = "NEON Pagamentos S.A";
 
 export default function PaymentPage({ onBack, onSuccess }: PaymentPageProps) {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
