@@ -197,7 +197,7 @@ export default function Anamnese({
       <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
         <h3 className="text-lg font-black text-white flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          Anamnese Completa
+          ANAMNESE COMPLETA - NOVA VERSÃO 2025
         </h3>
         <p className="text-white/70 text-sm">Avaliação nutricional integrada</p>
       </div>
