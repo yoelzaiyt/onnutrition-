@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-onn-primary: #22B391;
+  --color-onn-dark: #0B2B24;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0B2B24;
+  overflow-x: hidden;
+  color: white;
+}
+
+.onn-btn {
+  background-color: #27B494;
+  color: white;
+  padding: 20px;
+  border-radius: 1rem;
+  font-weight: 900;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(39, 180, 148, 0.2);
+  text-transform: uppercase;
+  width: 100%;
+  max-width: 320px;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.onn-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.onn-btn-secondary {
+  background-color: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  padding: 12px;
+  border-radius: 0.75rem;
+  font-weight: bold;
+  font-size: 10px;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 10px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B2B24;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a4d41;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #27B494;
+}

@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient demographic data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "birthDate": { "type": "string", "format": "date" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["name", "createdBy"]
+    },
+    "Anamnesis": {
+      "title": "Anamnesis",
+      "description": "Patient medical history and complaints",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "complaints": { "type": "string" },
+        "history": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "createdBy"]
+    },
+    "Anthropometry": {
+      "title": "Anthropometry",
+      "description": "Patient physical measurements",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "weight": { "type": "number" },
+        "height": { "type": "number" },
+        "bmi": { "type": "number" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "weight", "height", "createdBy"]
+    },
+    "DiagnosisEvolution": {
+      "title": "DiagnosisEvolution",
+      "description": "Evolution of patient diagnosis",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "evolution": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "evolution", "createdBy"]
+    },
+    "CompoundedPrescription": {
+      "title": "CompoundedPrescription",
+      "description": "Compounded prescriptions for the patient",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "formula": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "formula", "createdBy"]
+    },
+    "ProductList": {
+      "title": "ProductList",
+      "description": "List of products prescribed to the patient",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "products": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "products", "createdBy"]
+    },
+    "Meal": {
+      "title": "Meal",
+      "description": "A meal entry in the food diary",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "type": { "type": "string", "enum": ["breakfast", "morning_snack", "lunch", "afternoon_snack", "dinner", "supper"] },
+        "time": { "type": "string" },
+        "foods": { "type": "array" },
+        "consumed": { "type": "boolean" },
+        "notes": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "type", "foods", "createdBy"]
+    },
+    "DaySummary": {
+      "title": "DaySummary",
+      "description": "Summary of nutritional intake for a day",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "totalCalories": { "type": "number" },
+        "totalProtein": { "type": "number" },
+        "totalCarbs": { "type": "number" },
+        "totalFat": { "type": "number" },
+        "targetCalories": { "type": "number" },
+        "targetProtein": { "type": "number" },
+        "targetCarbs": { "type": "number" },
+        "targetFat": { "type": "number" },
+        "observations": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "date", "createdBy"]
+    },
+    "HealthQuestionnaireResult": {
+      "title": "HealthQuestionnaireResult",
+      "description": "Result of a health questionnaire",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "questionnaireId": { "type": "string" },
+        "score": { "type": "number" },
+        "status": { "type": "string", "enum": ["Respondido", "Pendente"] },
+        "answers": { "type": "array" },
+        "aiAnalysis": { "type": "string" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "questionnaireId", "score", "status", "answers", "createdBy"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment record for a consultation or service",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pago", "pendente"] },
+        "method": { "type": "string", "enum": ["Pix", "Cartão", "Dinheiro", "Transferência"] },
+        "description": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientId", "amount", "date", "status", "createdBy"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Invoice details for a payment",
+      "type": "object",
+      "properties": {
+        "paymentId": { "type": "string" },
+        "issueDate": { "type": "string", "format": "date-time" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["emitida", "cancelada", "paga"] },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["paymentId", "issueDate", "dueDate", "status", "createdBy"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/patients/{patientId}": {
+      "schema": "Patient",
+      "description": "Patient records"
+    },
+    "/patients/{patientId}/anamnesis/{anamnesisId}": {
+      "schema": "Anamnesis",
+      "description": "Anamnesis records for a patient"
+    },
+    "/patients/{patientId}/anthropometry/{anthropometryId}": {
+      "schema": "Anthropometry",
+      "description": "Anthropometry records for a patient"
+    },
+    "/patients/{patientId}/diagnosisEvolution/{diagnosisId}": {
+      "schema": "DiagnosisEvolution",
+      "description": "Diagnosis evolution records for a patient"
+    },
+    "/patients/{patientId}/compoundedPrescriptions/{prescriptionId}": {
+      "schema": "CompoundedPrescription",
+      "description": "Compounded prescriptions for a patient"
+    },
+    "/patients/{patientId}/productList/{productId}": {
+      "schema": "ProductList",
+      "description": "Product list records for a patient"
+    },
+    "/patients/{patientId}/meals/{mealId}": {
+      "schema": "Meal",
+      "description": "Meal records for a patient"
+    },
+    "/patients/{patientId}/daySummaries/{summaryId}": {
+      "schema": "DaySummary",
+      "description": "Day summary records for a patient"
+    },
+    "/patients/{patientId}/questionnaireResults/{resultId}": {
+      "schema": "HealthQuestionnaireResult",
+      "description": "Questionnaire results for a patient"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Payment records"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Invoice records"
+    }
+  }
+}
