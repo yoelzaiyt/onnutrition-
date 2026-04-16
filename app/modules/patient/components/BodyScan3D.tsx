@@ -24,7 +24,7 @@ import {
   Lightbulb,
   Sparkles,
 } from "lucide-react";
-import { addDocument, getDocuments } from "@/app/lib/firestore-utils";
+import { addDocument } from "@/app/lib/firestore-utils";
 
 interface BodyScanResult {
   id: string;
