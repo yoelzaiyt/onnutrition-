@@ -31,6 +31,7 @@ import {
   Settings,
   LogOut,
   Award,
+  BookOpen,
 } from "lucide-react";
 import { useFirebase } from "@/app/components/layout/FirebaseProvider";
 
@@ -57,6 +58,7 @@ import PatientFiles from "./components/PatientFiles";
 import PatientFinance from "./components/PatientFinance";
 import BodyScan3D from "./components/BodyScan3D";
 import ProfessionalModule from "./components/ProfessionalModule";
+import EducationModule from "./components/EducationModule";
 
 interface ModuleCard {
   id: string;
@@ -175,6 +177,13 @@ const professionalModules: ModuleCard[] = [
     color: "violet",
   },
   {
+    id: "education",
+    label: "Educação & IA",
+    icon: BookOpen,
+    description: "Cursos, Descobertas, Biblioteca",
+    color: "blue",
+  },
+  {
     id: "pregnancy",
     label: "Gestante",
     icon: Baby,
@@ -237,6 +246,7 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   anthropometry: Anthropometry,
   "body-scan": BodyScan3D,
   professional: ProfessionalModule,
+  education: EducationModule,
 };
 
 const getColorClasses = (color: string, isBg = false) => {
