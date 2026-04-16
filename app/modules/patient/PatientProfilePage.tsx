@@ -351,9 +351,7 @@ export default function PatientProfilePage() {
             }`}
           >
             <module.icon className="w-4 h-4" />
-            {module.label.length > 15
-              ? module.label.substring(0, 12) + "..."
-              : module.label}
+            {module.label}
           </button>
         ))}
       </div>
