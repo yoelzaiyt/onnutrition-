@@ -14,6 +14,7 @@ import FinancialModule from "@/app/components/features/FinancialModule";
 import PatientManagement from "@/app/components/features/PatientManagement";
 import PatientFlowManager from "@/app/components/features/PatientFlowManager";
 import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
+import PatientProfilePage from "@/app/modules/patient/PatientProfilePage";
 import Calendar from "@/app/components/ui/Calendar";
 import TopNav from "@/app/components/layout/TopNav";
 import DataImportExport from "@/app/components/features/DataImportExport";
@@ -39,7 +40,9 @@ export type AppView =
   | "finance"
   | "data"
   | "children"
-  | "generate-data";
+  | "generate-data"
+  | "education"
+  | "patient-profile";
 
 const VIEW_LABELS: Record<AppView, string> = {
   landing: "",
@@ -58,6 +61,8 @@ const VIEW_LABELS: Record<AppView, string> = {
   data: "Importar / Exportar",
   children: "Módulo Infantil",
   "generate-data": "Gerar Dados de Teste",
+  "patient-profile": "Perfil do Paciente",
+  education: "Educação Nutricional",
 };
 
 const FULL_WIDTH_VIEWS: AppView[] = [
@@ -70,6 +75,8 @@ const FULL_WIDTH_VIEWS: AppView[] = [
   "setup",
   "data",
   "children",
+  "patient-profile",
+  "education",
 ];
 
 export default function Home() {
@@ -328,6 +335,8 @@ export default function Home() {
               {view === "generate-data" && (
                 <TestDataGenerator nutriId={user?.id || "demo-nutri-id"} />
               )}
+              {view === "patient-profile" && <PatientProfilePage />}
+              {view === "education" && <PatientProfilePage />}
             </motion.div>
           </AnimatePresence>
         </div>

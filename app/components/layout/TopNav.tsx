@@ -16,6 +16,7 @@ import {
   ChevronRight,
   FileSpreadsheet,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import Logo from "@/app/components/ui/Logo";
 import type { AppView } from "@/app/page";
@@ -52,6 +53,12 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { id: "data", label: "Dados", icon: FileSpreadsheet },
+  {
+    id: "patient-profile",
+    label: "Educação",
+    icon: GraduationCap,
+    children: [{ id: "patient-profile", label: "Perfil do Paciente" }],
+  },
   { id: "generate-data", label: "Teste", icon: Sparkles },
   { id: "setup", label: "Configurações", icon: Settings },
 ];
