@@ -22,7 +22,13 @@ import {
   Save,
   Edit,
   CheckCircle,
+  Scan,
+  Ruler,
+  Activity,
+  Heart,
+  AlertTriangle,
 } from "lucide-react";
+import BodyScan3D from "./BodyScan3D";
 
 interface WeightRecord {
   id: string;
@@ -60,6 +66,7 @@ export default function Anamnese({
   >(null);
   const frontInputRef = useRef<HTMLInputElement>(null);
   const sideInputRef = useRef<HTMLInputElement>(null);
+  const [showOnScan, setShowOnScan] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToCollection<WeightRecord>(
@@ -155,13 +162,22 @@ export default function Anamnese({
             Preencha as informações detalhadas
           </p>
         </div>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-[#22B391] text-white px-4 py-2 rounded-lg hover:bg-[#1a9580] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Registro
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowOnScan(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Scan className="w-4 h-4" />
+            ON Scan 3D
+          </button>
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center gap-2 bg-[#22B391] text-white px-4 py-2 rounded-lg hover:bg-[#1a9580] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Registro
+          </button>
+        </div>
       </div>
 
       {isAdding && (
@@ -180,7 +196,7 @@ export default function Anamnese({
                 value={currentWeight}
                 onChange={(e) => setCurrentWeight(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-                placeholder="0"
+                placeholder="Ex: 70.5"
                 required
               />
             </div>
@@ -194,7 +210,7 @@ export default function Anamnese({
                 value={usualWeight}
                 onChange={(e) => setUsualWeight(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-                placeholder="0"
+                placeholder="Ex: 75.0"
               />
             </div>
             <div>
@@ -207,7 +223,7 @@ export default function Anamnese({
                 value={idealWeight}
                 onChange={(e) => setIdealWeight(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-                placeholder="0"
+                placeholder="Ex: 65.0"
               />
             </div>
             <div>
@@ -220,7 +236,7 @@ export default function Anamnese({
                 value={maxWeight}
                 onChange={(e) => setMaxWeight(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-                placeholder="0"
+                placeholder="Ex: 80.0"
               />
             </div>
             <div>
@@ -233,41 +249,25 @@ export default function Anamnese({
                 value={minWeight}
                 onChange={(e) => setMinWeight(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-                placeholder="0"
+                placeholder="Ex: 55.0"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Efeito Sanfona?
+            <div className="flex items-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasSanfona}
+                  onChange={(e) => setHasSanfona(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-[#22B391] focus:ring-[#22B391]"
+                />
+                <span className="text-sm text-gray-700">Sanfona?</span>
               </label>
-              <div className="flex gap-4 mt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="sanfona"
-                    checked={hasSanfona === true}
-                    onChange={() => setHasSanfona(true)}
-                    className="w-5 h-5 text-[#22B391]"
-                  />
-                  <span className="text-sm font-medium">Sim</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="sanfona"
-                    checked={hasSanfona === false}
-                    onChange={() => setHasSanfona(false)}
-                    className="w-5 h-5 text-[#22B391]"
-                  />
-                  <span className="text-sm font-medium">Não</span>
-                </label>
-              </div>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fotos do Paciente
+              Fotos Antropométricas
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -353,57 +353,93 @@ export default function Anamnese({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22B391] focus:border-transparent"
-              rows={3}
               placeholder="Observações adicionais..."
+              rows={3}
             />
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="flex-1 flex items-center justify-center gap-2 bg-[#22B391] text-white py-3 rounded-lg hover:bg-[#1a9580] transition-colors font-medium"
+            >
+              <Save className="w-5 h-5" />
+              Salvar Registro
+            </button>
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-[#22B391] text-white rounded-lg hover:bg-[#1a9580] transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              Salvar Registro
             </button>
           </div>
         </form>
       )}
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-blue-50 p-4 rounded-xl">
+          <p className="text-xs text-blue-600 font-medium">Peso Atual</p>
+          <p className="text-2xl font-black text-blue-700">
+            {latestRecord?.currentWeight || "-"}kg
+          </p>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-xl">
+          <p className="text-xs text-gray-500 font-medium">Habitual</p>
+          <p className="text-2xl font-black text-gray-700">
+            {latestRecord?.usualWeight || "-"}kg
+          </p>
+        </div>
+        <div className="bg-emerald-50 p-4 rounded-xl">
+          <p className="text-xs text-emerald-600 font-medium">Ideal</p>
+          <p className="text-2xl font-black text-emerald-700">
+            {latestRecord?.idealWeight || "-"}kg
+          </p>
+        </div>
+        <div
+          className={`p-4 rounded-xl ${
+            weightVariation && parseFloat(weightVariation) > 0
+              ? "bg-red-50"
+              : parseFloat(weightVariation) < 0
+                ? "bg-green-50"
+                : "bg-gray-50"
+          }`}
+        >
+          <p className="text-xs text-gray-500 font-medium">Variação</p>
+          <p
+            className={`text-2xl font-black ${
+              weightVariation && parseFloat(weightVariation) > 0
+                ? "text-red-700"
+                : parseFloat(weightVariation) < 0
+                  ? "text-green-700"
+                  : "text-gray-700"
+            }`}
+          >
+            {weightVariation && parseFloat(weightVariation) !== 0
+              ? `${weightVariation > 0 ? "+" : ""}${weightVariation}kg`
+              : "-"}
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-4">
         {records.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
             <Scale className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            Nenhum registro de peso encontrado.
+            Nenhum registro encontrado.
           </div>
         ) : (
           records.map((record) => (
             <div
               key={record.id}
-              className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-white"
+              className="bg-white p-6 rounded-xl border border-gray-200"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-500">
                     {new Date(record.date).toLocaleDateString("pt-BR")}
-                  </div>
-                  {record.hasSanfona !== undefined && (
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${record.hasSanfona ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"}`}
-                    >
-                      {record.hasSanfona
-                        ? "Efeito Sanfona"
-                        : "Sem Efeito Sanfona"}
-                    </span>
-                  )}
+                  </span>
                 </div>
                 <button
                   onClick={() => handleDelete(record.id)}
@@ -449,36 +485,34 @@ export default function Anamnese({
               </div>
 
               {(record.photoFront || record.photoSide) && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    Fotos do Paciente
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                  <p className="col-span-2 text-xs text-gray-500 mb-2">
+                    Fotos Antropométricas
                   </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {record.photoFront && (
-                      <div className="relative rounded-xl overflow-hidden">
-                        <img
-                          src={record.photoFront}
-                          alt="Foto frontal"
-                          className="w-full h-48 object-cover"
-                        />
-                        <span className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg">
-                          Frontal
-                        </span>
-                      </div>
-                    )}
-                    {record.photoSide && (
-                      <div className="relative rounded-xl overflow-hidden">
-                        <img
-                          src={record.photoSide}
-                          alt="Foto lateral"
-                          className="w-full h-48 object-cover"
-                        />
-                        <span className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg">
-                          Lateral
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {record.photoFront && (
+                    <div className="relative rounded-xl overflow-hidden">
+                      <img
+                        src={record.photoFront}
+                        alt="Foto frontal"
+                        className="w-full h-48 object-cover"
+                      />
+                      <span className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg">
+                        Frontal
+                      </span>
+                    </div>
+                  )}
+                  {record.photoSide && (
+                    <div className="relative rounded-xl overflow-hidden">
+                      <img
+                        src={record.photoSide}
+                        alt="Foto lateral"
+                        className="w-full h-48 object-cover"
+                      />
+                      <span className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg">
+                        Lateral
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -491,6 +525,24 @@ export default function Anamnese({
           ))
         )}
       </div>
+
+      {showOnScan && (
+        <div className="mt-8 border-t border-gray-200 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Scan className="w-6 h-6 text-indigo-600" />
+              ON Scan 3D - Avaliação Antropométrica
+            </h3>
+            <button
+              onClick={() => setShowOnScan(false)}
+              className="text-gray-500 hover:text-gray-700 px-3 py-1"
+            >
+              ✕ Fechar
+            </button>
+          </div>
+          <BodyScan3D patientId={patientId} />
+        </div>
+      )}
     </div>
   );
 }

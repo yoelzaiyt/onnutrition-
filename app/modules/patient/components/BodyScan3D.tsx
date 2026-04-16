@@ -69,6 +69,18 @@ function estimateBodyComposition(imageData: string): {
   measurements: any;
   posture: string;
   risk: "low" | "moderate" | "high";
+  bodyComposition: {
+    muscleMass: number;
+    boneDensity: number;
+    waterContent: number;
+    visceralFat: number;
+  };
+  metabolicIndicators: {
+    basalMetabolism: number;
+    dailyCalories: number;
+    proteinNeeds: number;
+  };
+  riskFactors: string[];
 } {
   const hash = imageData
     .split("")
@@ -77,6 +89,20 @@ function estimateBodyComposition(imageData: string): {
   const weight = 60 + Math.abs(hash % 30);
   const height = 165 + Math.abs(hash % 20);
   const imc = weight / (height / 100) ** 2;
+  const muscleMass = weight * 0.4 + Math.abs(hash % 10);
+  const boneDensity = 2.5 + Math.abs(hash % 10) / 10;
+  const waterContent = 55 + Math.abs(hash % 15);
+  const visceralFat = 5 + Math.abs(hash % 10);
+  const basalMetabolism = weight * 24;
+  const dailyCalories = basalMetabolism * 1.2;
+  const proteinNeeds = weight * 1.6;
+
+  const riskFactors: string[] = [];
+  if (bodyFat > 25) riskFactors.push("Excesso de gordura corporal");
+  if (imc > 25) riskFactors.push("Sobrepeso detectado");
+  if (imc > 30) riskFactors.push("Obesidade leve");
+  if (visceralFat > 10) riskFactors.push("Gordura visceral elevada");
+  if (bodyFat > 30) riskFactors.push("Risco cardiovascular aumentado");
 
   return {
     bodyFat,
@@ -89,14 +115,28 @@ function estimateBodyComposition(imageData: string): {
       hip: 90 + Math.abs(hash % 20),
       thigh: 50 + Math.abs(hash % 15),
       chest: 90 + Math.abs(hash % 20),
+      neck: 35 + Math.abs(hash % 5),
+      calf: 30 + Math.abs(hash % 8),
     },
     posture:
       hash % 3 === 0
-        ? "Postura inadequada - shoulders anteriorizadas"
+        ? "Postura inadequada - ombros anteriorizados"
         : hash % 2 === 0
-          ? "Postura regular - leve anterversão"
+          ? "Postura regular - leve anterversão pélvica"
           : "Postura adequada - alinhamento neutro",
     risk: bodyFat > 25 ? "high" : bodyFat > 15 ? "moderate" : "low",
+    bodyComposition: {
+      muscleMass: Math.round(muscleMass),
+      boneDensity: Math.round(boneDensity * 10) / 10,
+      waterContent,
+      visceralFat,
+    },
+    metabolicIndicators: {
+      basalMetabolism,
+      dailyCalories: Math.round(dailyCalories),
+      proteinNeeds: Math.round(proteinNeeds),
+    },
+    riskFactors,
   };
 }
 
@@ -202,7 +242,7 @@ export default function BodyScan3D({
               <Camera className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black">Body Scan 3D</h3>
+              <h3 className="text-xl font-black">ON Scan 3D</h3>
               <p className="text-white/70 text-sm">
                 Avaliação corporal por inteligência artificial
               </p>
@@ -296,7 +336,7 @@ export default function BodyScan3D({
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-black text-[#0B2B24]">
-            Relatório Body Scan 3D
+            Relatório ON Scan 3D
           </h3>
           <button
             onClick={handleNewScan}
