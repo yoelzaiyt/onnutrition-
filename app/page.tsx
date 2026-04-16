@@ -230,10 +230,23 @@ export default function Home() {
     <div className="flex flex-col h-screen bg-[#F8FAFC] font-sans overflow-hidden text-slate-900">
       <TopNav
         activeView={view}
-        setView={(v: AppView) => setView(v)}
+        setView={(v: AppView) => {
+          setView(v);
+          if (v === "anamnesis") {
+            setUserRole("patient");
+          }
+        }}
         user={user}
         userRole={userRole}
         onLogout={() => setShowLogoutModal(true)}
+        onSwitchRole={(role: string) => {
+          setUserRole(role);
+          if (role === "patient") {
+            setView("anamnesis");
+          } else {
+            setView("dashboard");
+          }
+        }}
       />
 
       <main className="flex-1 overflow-y-auto relative">

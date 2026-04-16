@@ -62,6 +62,7 @@ interface TopNavProps {
   user: any;
   userRole: string | null;
   onLogout: () => void;
+  onSwitchRole: (role: string) => void;
 }
 
 const TopNav: React.FC<TopNavProps> = ({
@@ -70,6 +71,7 @@ const TopNav: React.FC<TopNavProps> = ({
   user,
   userRole,
   onLogout,
+  onSwitchRole,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<AppView | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -181,13 +183,16 @@ const TopNav: React.FC<TopNavProps> = ({
                 user?.email?.split("@")[0] ||
                 "Usuário"}
             </p>
-            <p className="text-[10px] text-slate-400 font-medium">
-              {userRole === "admin"
-                ? "Administrador"
-                : userRole === "patient"
-                  ? "Paciente"
-                  : "Nutricionista"}
-            </p>
+            <button
+              onClick={() =>
+                onSwitchRole(userRole === "patient" ? "nutri" : "patient")
+              }
+              className="text-[10px] text-[#22B391] font-medium hover:underline flex items-center gap-1"
+            >
+              {userRole === "patient"
+                ? "Mudar para Nutri"
+                : "Mudar para Paciente"}
+            </button>
           </div>
         </div>
 
