@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   ChevronDown,
   LogOut,
@@ -16,9 +16,9 @@ import {
   ChevronRight,
   FileSpreadsheet,
   Sparkles,
-} from 'lucide-react';
-import Logo from '@/app/components/ui/Logo';
-import type { AppView } from '@/app/page';
+} from "lucide-react";
+import Logo from "@/app/components/ui/Logo";
+import type { AppView } from "@/app/page";
 
 interface NavItem {
   id: AppView;
@@ -28,38 +28,49 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Consultório', icon: LayoutDashboard },
-  { id: 'calendar',  label: 'Agenda',      icon: Calendar },
+  { id: "dashboard", label: "Consultório", icon: LayoutDashboard },
+  { id: "calendar", label: "Agenda", icon: Calendar },
   {
-    id: 'patients', label: 'Pacientes', icon: Users,
+    id: "patients",
+    label: "Pacientes",
+    icon: Users,
     children: [
-      { id: 'patients',  label: 'Todos os Pacientes' },
-      { id: 'flow',      label: 'Fluxo de Atendimento' },
-      { id: 'anamnesis', label: 'Anamnese' },
-      { id: 'medical',   label: 'Prontuários' },
+      { id: "patients", label: "Todos os Pacientes" },
+      { id: "flow", label: "Fluxo de Atendimento" },
+      { id: "anamnesis", label: "Anamnese" },
+      { id: "medical", label: "Prontuários" },
     ],
   },
-  { id: 'finance', label: 'Financeiro', icon: DollarSign },
+  { id: "finance", label: "Financeiro", icon: DollarSign },
   {
-    id: 'diary', label: 'Ferramentas', icon: Utensils,
+    id: "diary",
+    label: "Ferramentas",
+    icon: Utensils,
     children: [
-      { id: 'diary',   label: 'Diário Alimentar' },
-      { id: 'recipes', label: 'Biblioteca de Receitas' },
+      { id: "diary", label: "Diário Alimentar" },
+      { id: "recipes", label: "Biblioteca de Receitas" },
     ],
   },
-  { id: 'data', label: 'Dados', icon: FileSpreadsheet },
-  { id: 'generate-data', label: 'Teste', icon: Sparkles },
-  { id: 'setup', label: 'Configurações', icon: Settings },
+  { id: "data", label: "Dados", icon: FileSpreadsheet },
+  { id: "generate-data", label: "Teste", icon: Sparkles },
+  { id: "setup", label: "Configurações", icon: Settings },
 ];
 
 interface TopNavProps {
   activeView: AppView;
   setView: (view: AppView) => void;
   user: any;
+  userRole: string | null;
   onLogout: () => void;
 }
 
-const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) => {
+const TopNav: React.FC<TopNavProps> = ({
+  activeView,
+  setView,
+  user,
+  userRole,
+  onLogout,
+}) => {
   const [openDropdown, setOpenDropdown] = useState<AppView | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -70,8 +81,8 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
         setOpenDropdown(null);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const handleNavClick = (item: NavItem) => {
@@ -90,8 +101,24 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
 
   const isActive = (item: NavItem): boolean => {
     if (activeView === item.id) return true;
-    return item.children?.some(c => c.id === activeView) ?? false;
+    return item.children?.some((c) => c.id === activeView) ?? false;
   };
+
+  const isAdmin =
+    userRole === "admin" || user?.email === "word.intelligence@gmail.com";
+
+  const filteredNavItems = NAV_ITEMS.filter((item) => {
+    if (item.id === "setup") return isAdmin;
+    if (item.id === "data") return isAdmin || userRole === "nutri";
+    if (item.id === "generate-data") return isAdmin;
+    if (item.id === "dashboard") return userRole !== "patient";
+    if (item.id === "calendar") return userRole !== "patient";
+    if (item.id === "patients") return userRole !== "patient";
+    if (item.id === "finance") return userRole !== "patient";
+    if (item.id === "flow" || item.id === "anamnesis" || item.id === "medical")
+      return userRole !== "patient";
+    return true;
+  });
 
   return (
     <nav
@@ -104,20 +131,20 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
 
         {/* Nav Items */}
         <div className="hidden md:flex items-center gap-1">
-          {NAV_ITEMS.map((item) => (
+          {filteredNavItems.map((item) => (
             <div key={item.id} className="relative">
               <button
                 onClick={() => handleNavClick(item)}
                 className={`flex items-center gap-1.5 px-4 py-5 text-[13px] font-bold transition-all border-b-2 ${
                   isActive(item)
-                    ? 'text-[#22B391] border-[#22B391]'
-                    : 'text-slate-500 border-transparent hover:text-[#22B391] hover:border-[#22B391]/30'
+                    ? "text-[#22B391] border-[#22B391]"
+                    : "text-slate-500 border-transparent hover:text-[#22B391] hover:border-[#22B391]/30"
                 }`}
               >
                 {item.label}
                 {item.children && (
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform ${openDropdown === item.id ? 'rotate-180' : ''}`}
+                    className={`w-3.5 h-3.5 transition-transform ${openDropdown === item.id ? "rotate-180" : ""}`}
                   />
                 )}
               </button>
@@ -130,7 +157,9 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
                       key={child.id}
                       onClick={() => handleChildClick(child.id)}
                       className={`w-full flex items-center justify-between px-5 py-3 text-sm font-bold transition-all hover:bg-slate-50 hover:text-[#22B391] ${
-                        activeView === child.id ? 'text-[#22B391] bg-[#22B391]/5' : 'text-slate-600'
+                        activeView === child.id
+                          ? "text-[#22B391] bg-[#22B391]/5"
+                          : "text-slate-600"
                       }`}
                     >
                       {child.label}
@@ -148,13 +177,23 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 cursor-default">
           <div className="w-7 h-7 bg-[#22B391] rounded-lg flex items-center justify-center text-white font-black text-xs">
-            {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+            {user?.user_metadata?.full_name?.charAt(0) ||
+              user?.email?.charAt(0)?.toUpperCase() ||
+              "U"}
           </div>
           <div className="hidden md:block">
             <p className="text-xs font-black text-slate-900 truncate max-w-[120px]">
-              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'}
+              {user?.user_metadata?.full_name ||
+                user?.email?.split("@")[0] ||
+                "Usuário"}
             </p>
-            <p className="text-[10px] text-slate-400 font-medium">Nutricionista</p>
+            <p className="text-[10px] text-slate-400 font-medium">
+              {userRole === "admin"
+                ? "Administrador"
+                : userRole === "patient"
+                  ? "Paciente"
+                  : "Nutricionista"}
+            </p>
           </div>
         </div>
 
@@ -163,7 +202,10 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
           className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
           title="Sair"
         >
-          <LogOut className="w-4.5 h-4.5" style={{ width: '18px', height: '18px' }} />
+          <LogOut
+            className="w-4.5 h-4.5"
+            style={{ width: "18px", height: "18px" }}
+          />
         </button>
       </div>
     </nav>
