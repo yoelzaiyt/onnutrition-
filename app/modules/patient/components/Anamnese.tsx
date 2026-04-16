@@ -196,7 +196,7 @@ export default function Anamnese({
     <div className="space-y-4">
       <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
         <h3 className="text-lg font-black text-white flex items-center gap-2">
-          🔥🔥🔥 ANAMNESE v5.0 TESTE DEPLOY - FUNCIONA! 🔥🔥🔥
+          📋 ANAMNESE COMPLETA - 9 FERRAMENTAS INTEGRADAS
         </h3>
         <p className="text-white/70 text-sm">
           ⭐ Avaliação nutricional integrada - ATUALIZADO HOJE ⭐
