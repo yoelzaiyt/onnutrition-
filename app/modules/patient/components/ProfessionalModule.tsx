@@ -217,13 +217,33 @@ const sampleTestimonials: Testimonial[] = [
   },
 ];
 
-const evidenceLevels = ["Alta", "Moderada", "Baixa"];
+const evidenceLevels = [
+  "Meta-análise",
+  "Revisão Sistemática",
+  "Ensaio Clínico",
+  "Coorte",
+  "Caso-controle",
+  "Alta",
+  "Moderada",
+  "Baixa",
+];
 const areas = [
   "Cardiovascular",
   "Obesidade",
   "Esportivo",
   "Metabolismo",
   "Diabetes",
+  "Nutrição Clínica",
+  "Gastroenterologia",
+  "Endocrinologia",
+  "Pediatria",
+  "Gestante",
+  "Idoso",
+  "Oncologia",
+  "Esportes",
+  "Atualização Científica",
+  "Meta-análises",
+  "Revisões Sistemáticas",
 ];
 
 export default function ProfessionalModule() {
@@ -263,6 +283,14 @@ export default function ProfessionalModule() {
 
   const renderScientificTab = () => (
     <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+        <h4 className="font-bold text-blue-800 mb-2">📚 Pipeline de IA</h4>
+        <p className="text-sm text-blue-700">
+          Artigos são processados automaticamente: ingestsão → resumo técnico →
+          extração de insights → classificação temática
+        </p>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -311,11 +339,18 @@ export default function ProfessionalModule() {
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      article.evidenceLevel === "Alta"
+                      article.evidenceLevel === "Meta-análise" ||
+                      article.evidenceLevel === "Revisão Sistemática" ||
+                      article.evidenceLevel === "Ensaio Clínico"
                         ? "bg-green-100 text-green-700"
-                        : article.evidenceLevel === "Moderada"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                        : article.evidenceLevel === "Coorte" ||
+                            article.evidenceLevel === "Caso-controle"
+                          ? "bg-blue-100 text-blue-700"
+                          : article.evidenceLevel === "Alta"
+                            ? "bg-green-100 text-green-700"
+                            : article.evidenceLevel === "Moderada"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
                     }`}
                   >
                     {article.evidenceLevel}
@@ -622,6 +657,14 @@ export default function ProfessionalModule() {
 
   const renderAITab = () => (
     <div className="space-y-6">
+      <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
+        <h4 className="font-bold text-red-800 mb-2">⚠️ Restrição de Uso</h4>
+        <p className="text-sm text-red-700">
+          Esta IA é exclusiv do profissional. Não utilize para automação clínica
+          direta ou prescrição automática. Sempre revise antes de aplicar.
+        </p>
+      </div>
+
       <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-8 rounded-2xl text-white">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
