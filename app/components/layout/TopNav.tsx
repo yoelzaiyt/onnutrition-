@@ -56,7 +56,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "data", label: "Dados", icon: FileSpreadsheet },
   {
     id: "patient-profile",
-    label: "Cursos & Formação",
+    label: "CURSOS",
     icon: GraduationCap,
     children: [
       { id: "patient-profile", label: "Profissional (Nutricionista)" },

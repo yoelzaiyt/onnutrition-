@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   GraduationCap,
   BookOpen,
@@ -23,9 +23,19 @@ import {
   TrendingUp,
   Bookmark,
   Activity,
-  Award
+  Award,
+  Loader2,
+  ExternalLink,
+  Brain
 } from "lucide-react";
+import { pubmedService, PubMedArticle } from "@/app/lib/pubmedService";
+import { 
+  getAICopilotResponse, 
+  summarizeArticle, 
+  isGeminiConfigured 
+} from "@/lib/gemini";
 
+// --- Types Fix ---
 interface Course {
   id: string;
   title: string;
@@ -37,20 +47,6 @@ interface Course {
   features: ("certificacao" | "progresso" | "trilhas_de_aprendizado" | "monetizacao")[];
   rating: number;
   progress: number;
-}
-
-interface NewsArticle {
-  id: string;
-  titulo: string;
-  resumo_ia: {
-    simplificado: string;
-    tecnico: string;
-  };
-  nivel_evidencia: "alto" | "medio" | "baixo";
-  relevancia: "alta" | "media" | "baixa";
-  aplicacao_clinica: string;
-  categoria: "nutricao" | "obesidade" | "diabetes" | "microbiota" | "performance";
-  data: string;
 }
 
 interface AIResponse {
@@ -98,55 +94,82 @@ const sampleCourses: Course[] = [
   },
 ];
 
-const sampleNews: NewsArticle[] = [
-  {
-    id: "1",
-    titulo: "Jejum intermitente vs Dieta restritiva contínua em obesidade endócrina",
-    resumo_ia: {
-      simplificado: "Ambas as dietas têm resultados similares para perda de peso, mas o jejum melhora resistência insulínica mais rápido.",
-      tecnico: "Ensaio clínico randomizado demonstra redução HbA1c pareada, contudo AUC de insulina foi 15% menor na coorte de jejum intermitente restrito no tempo (TRF) em 12 semanas."
-    },
-    nivel_evidencia: "alto",
-    relevancia: "alta",
-    aplicacao_clinica: "Estratégia viável para pacientes diabéticos tipo 2 resistentes à restrição calórica contínua. Requer monitoramento para hipoglicemia.",
-    categoria: "obesidade",
-    data: "Hoje"
-  },
-  {
-    id: "2",
-    titulo: "Microbioma Intestinal e Absorção de Whey Protein",
-    resumo_ia: {
-      simplificado: "Bactérias do intestino mudam quando consumimos Whey, ajudando a absorver os aminoácidos melhor e mais rápido.",
-      tecnico: "Modulação transitória das colônias firmicutes após 14 dias de altas dosagens de Whey isolado sugerem adaptação enzimática de BCAA induzida."
-    },
-    nivel_evidencia: "medio",
-    relevancia: "media",
-    aplicacao_clinica: "Possível indicação de ajuste e rodízio de fontes proteicas pós-treino para evitar estagnação absortiva na microbiota.",
-    categoria: "microbiota",
-    data: "Ontem"
-  }
-];
-
 export default function EducationModule() {
   const [activeTab, setActiveTab] = useState<"courses" | "feed" | "library" | "assistant" | "insights">("courses");
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedNews, setExpandedNews] = useState<string | null>(null);
+  
+  // States para PubMed e IA
+  const [articles, setArticles] = useState<PubMedArticle[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+  const [articleSummaries, setArticleSummaries] = useState<Record<string, any>>({});
+  const [generatingSummary, setGeneratingSummary] = useState<string | null>(null);
   const [newsMode, setNewsMode] = useState<Record<string, "simplificado" | "tecnico">>({});
   
+  // States para Chat
   const [aiMessage, setAiMessage] = useState("");
   const [aiHistory, setAiHistory] = useState<AIResponse[]>([]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
-  const handleSendAIMessage = () => {
-    if (!aiMessage.trim()) return;
-    setAiHistory(prev => [...prev, { id: Date.now().toString(), role: "user", content: aiMessage }]);
+  // Efeito Inicial: Carregar Artigos
+  useEffect(() => {
+    if (activeTab === "feed" && articles.length === 0) {
+      handleFetchArticles();
+    }
+  }, [activeTab]);
+
+  const handleFetchArticles = async () => {
+    setLoadingArticles(true);
+    try {
+      const data = await pubmedService.searchArticles(searchQuery || 'nutrition medical science', 6);
+      setArticles(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
+  const handleSummarize = async (article: PubMedArticle) => {
+    if (articleSummaries[article.id] || generatingSummary) return;
+    
+    setGeneratingSummary(article.id);
+    try {
+      const summary = await summarizeArticle(article.title, `Authors: ${article.authors.join(', ')}. Source: ${article.source}`);
+      setArticleSummaries(prev => ({ ...prev, [article.id]: summary }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingSummary(null);
+    }
+  };
+
+  const handleSendAIMessage = async () => {
+    if (!aiMessage.trim() || isAiTyping) return;
+    
+    const userMsg = { id: Date.now().toString(), role: "user" as const, content: aiMessage };
+    setAiHistory(prev => [...prev, userMsg]);
     setAiMessage("");
-    setTimeout(() => {
-      setAiHistory(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
-        role: "assistant", 
-        content: `Aqui está um insight técnico baseado na literatura atual. Lembrando que não gero diagnósticos ou dietas aplicadas.\n\nSugestão de leitura para este tema: "Impacts of Nutrition on Clinical Outcomes (2025)".`
-      }]);
-    }, 800);
+    setIsAiTyping(true);
+
+    try {
+      if (isGeminiConfigured()) {
+        const response = await getAICopilotResponse(aiMessage, aiHistory);
+        setAiHistory(prev => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: response }]);
+      } else {
+        // Fallback Mock se não houver chave
+        setTimeout(() => {
+          setAiHistory(prev => [...prev, { 
+            id: (Date.now() + 1).toString(), 
+            role: "assistant", 
+            content: "Interface de IA configurada com sucesso. Para respostas reais, certifique-se de que a chave do Gemini está no seu arquivo .env. No modo atual, estou operando como um assistente profissional simulado para apoio técnico."
+          }]);
+        }, 1000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAiTyping(false);
+    }
   };
 
   const getEvidenceColor = (level: string) => {
@@ -156,13 +179,6 @@ export default function EducationModule() {
       case "baixo": return "bg-red-500/20 text-red-400 border-red-500/30";
       default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
-  };
-
-  const focusLabels: Record<string, string> = {
-    nutricao_clinica: "Nutrição Clínica",
-    esportiva: "Nutrição Esportiva",
-    metabolismo: "Metabolismo",
-    comportamento_alimentar: "Comport. Alimentar",
   };
 
   return (
@@ -237,7 +253,7 @@ export default function EducationModule() {
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-4">
                       <span className="px-2 py-1 bg-white/5 text-slate-300 border border-white/10 rounded text-[10px] font-bold uppercase tracking-wider">
-                        {focusLabels[course.focus]}
+                        {course.focus.replace('_', ' ')}
                       </span>
                       <div className="flex items-center gap-1 bg-[#0a0f16] px-2 py-1 rounded border border-white/5">
                         <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
@@ -280,69 +296,126 @@ export default function EducationModule() {
           </div>
         )}
 
-        {/* TAB 2: FEED CIENTÍFICO */}
+        {/* TAB 2: FEED CIENTÍFICO (REAL PUBMED) */}
         {activeTab === "feed" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-black text-white flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#45dcb9]"/> Atualização Científica Diária</h3>
-                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-slate-300">
-                  {new Date().toLocaleDateString("pt-BR")}
-                </span>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#45dcb9]"/> 
+                  Atualização PubMed em Tempo Real
+                </h3>
+                <div className="flex items-center gap-3">
+                   <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                      <input 
+                        type="text" 
+                        placeholder="Pesquisar termo..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleFetchArticles()}
+                        className="bg-[#0a0f16] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-[#45dcb9]"
+                      />
+                   </div>
+                   <button 
+                     onClick={handleFetchArticles}
+                     className="p-1.5 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all"
+                   >
+                     {loadingArticles ? <Loader2 className="w-4 h-4 animate-spin text-[#45dcb9]"/> : <TrendingUp className="w-4 h-4" />}
+                   </button>
+                </div>
              </div>
 
-             <div className="space-y-4">
-               {sampleNews.map(news => (
-                 <div key={news.id} className="bg-[#0f1520] border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex gap-2 items-center text-[10px] font-bold uppercase tracking-wider">
-                        <span className="px-2 py-1 rounded bg-[#22B391]/10 text-[#45dcb9] border border-[#22B391]/20">
-                          {news.categoria}
-                        </span>
-                        <span className={`px-2 py-1 rounded border ${getEvidenceColor(news.nivel_evidencia)}`}>
-                          Evidência: {news.nivel_evidencia}
-                        </span>
+             {loadingArticles ? (
+               <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-[#45dcb9] opacity-50" />
+                  <p className="text-sm text-slate-500 animate-pulse font-medium">Buscando evidências recentes na NCBI...</p>
+               </div>
+             ) : (
+               <div className="space-y-4">
+                 {articles.map(news => (
+                   <div key={news.id} className="bg-[#0f1520] border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all group">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex gap-2 items-center text-[10px] font-bold uppercase tracking-wider">
+                          <span className="px-2 py-1 rounded bg-[#22B391]/10 text-[#45dcb9] border border-[#22B391]/20">
+                            PubMed ID: {news.id}
+                          </span>
+                          {articleSummaries[news.id] && (
+                            <span className={`px-2 py-1 rounded border ${getEvidenceColor(articleSummaries[news.id].nivel_evidencia)}`}>
+                              Evidência: {articleSummaries[news.id].nivel_evidencia}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-slate-500">{news.pubDate}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{news.data}</span>
-                    </div>
-                    
-                    <h4 className="text-lg font-bold text-white mb-4 leading-snug">{news.titulo}</h4>
-                    
-                    {/* Resumo IA Toggle Content */}
-                    <div className="bg-[#0a0f16] rounded-xl border border-white/5 overflow-hidden mb-4">
-                       <div className="flex border-b border-white/5">
-                         <button 
-                           onClick={() => setNewsMode(prev => ({...prev, [news.id]: "simplificado"}))}
-                           className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest ${newsMode[news.id] !== "tecnico" ? "bg-[#22B391]/10 text-[#45dcb9] shadow-[inset_0_-1px_0_rgba(69,220,185,1)]" : "text-slate-500 hover:text-slate-300"}`}
-                         >
-                           Simplificado
-                         </button>
-                         <button 
-                           onClick={() => setNewsMode(prev => ({...prev, [news.id]: "tecnico"}))}
-                           className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest ${newsMode[news.id] === "tecnico" ? "bg-[#22B391]/10 text-[#45dcb9] shadow-[inset_0_-1px_0_rgba(69,220,185,1)]" : "text-slate-500 hover:text-slate-300"}`}
-                         >
-                           Técnico
-                         </button>
-                       </div>
-                       <div className="p-4 text-sm text-slate-300 leading-relaxed min-h-[80px]">
-                         {newsMode[news.id] === "tecnico" ? news.resumo_ia.tecnico : (news.resumo_ia.simplificado || "Selecione o modo de leitura assistido para visualizar o resumo gerado.")}
-                       </div>
-                    </div>
+                      
+                      <h4 className="text-lg font-bold text-white mb-4 leading-snug group-hover:text-[#45dcb9] transition-colors">
+                        {news.title}
+                      </h4>
+                      
+                      <p className="text-xs text-slate-400 mb-4 italic line-clamp-1">
+                        Autores: {news.authors.join(', ')} • {news.source}
+                      </p>
+                      
+                      {/* Resumo IA ou Botão de Summarize */}
+                      {!articleSummaries[news.id] ? (
+                        <button 
+                          onClick={() => handleSummarize(news)}
+                          disabled={generatingSummary === news.id}
+                          className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-[#45dcb9] hover:bg-[#45dcb9]/10 transition-all flex items-center justify-center gap-2"
+                        >
+                          {generatingSummary === news.id ? (
+                            <><Loader2 className="w-4 h-4 animate-spin"/> Analisando com IA...</>
+                          ) : (
+                            <><Brain className="w-4 h-4"/> Gerar Resumo Científico via Gemini</>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="bg-[#0a0f16] rounded-xl border border-white/5 overflow-hidden mb-4 animate-in fade-in slide-in-from-top-2">
+                           <div className="flex border-b border-white/5">
+                             <button 
+                               onClick={() => setNewsMode(prev => ({...prev, [news.id]: "simplificado"}))}
+                               className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest ${newsMode[news.id] !== "tecnico" ? "bg-[#22B391]/10 text-[#45dcb9] shadow-[inset_0_-1px_0_rgba(69,220,185,1)]" : "text-slate-500 hover:text-slate-300"}`}
+                             >
+                               Simplificado
+                             </button>
+                             <button 
+                               onClick={() => setNewsMode(prev => ({...prev, [news.id]: "tecnico"}))}
+                               className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest ${newsMode[news.id] === "tecnico" ? "bg-[#22B391]/10 text-[#45dcb9] shadow-[inset_0_-1px_0_rgba(69,220,185,1)]" : "text-slate-500 hover:text-slate-300"}`}
+                             >
+                               Técnico
+                             </button>
+                           </div>
+                           <div className="p-4 text-sm text-slate-300 leading-relaxed min-h-[80px]">
+                             {newsMode[news.id] === "tecnico" ? articleSummaries[news.id].tecnico : articleSummaries[news.id].simplificado}
+                           </div>
+                           <div className="px-4 py-3 bg-indigo-500/5 border-t border-white/5 flex items-start gap-2">
+                              <Activity className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                              <p className="text-[11px] text-indigo-300 font-medium">
+                                <span className="font-bold uppercase tracking-tighter mr-1 text-indigo-400">Aplicação Clínica:</span>
+                                {articleSummaries[news.id].aplicacao_clinica}
+                              </p>
+                           </div>
+                        </div>
+                      )}
 
-                    {/* Aplicação Clínica */}
-                    <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 p-4 rounded-xl">
-                      <Activity className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
-                      <div>
-                        <span className="block text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Impacto & Aplicação Clínica</span>
-                        <p className="text-sm text-slate-300 leading-relaxed">{news.aplicacao_clinica}</p>
+                      <div className="flex justify-end pt-2">
+                         <a 
+                           href={news.url} 
+                           target="_blank" 
+                           rel="noreferrer"
+                           className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-[#45dcb9] uppercase tracking-wider"
+                         >
+                           Ver Artigo Completo <ExternalLink className="w-3 h-3" />
+                         </a>
                       </div>
-                    </div>
-                 </div>
-               ))}
-             </div>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
         )}
 
-        {/* TAB 3: IA CO-PILOTO */}
+        {/* TAB 3: IA CO-PILOTO (CHAT REAL) */}
         {activeTab === "assistant" && (
           <div className="h-full flex flex-col max-w-4xl mx-auto animate-in fade-in duration-500">
              {/* Banner de Regras Profissionais */}
@@ -352,34 +425,42 @@ export default function EducationModule() {
                   <h4 className="text-sm font-bold text-red-300 mb-1">Assistente Exclusivo para Apoio Educacional</h4>
                   <p className="text-xs text-red-200/80 leading-relaxed">
                     A IA Co-Piloto é programada **apenas para suporte técnico estrutural e pesquisa**. 
-                    É estritamente **proibido** utilizar este modelo para gerar prescrições clínicas diretas para pacientes, laudos ou dietas personalizadas de tratamento.
+                    É estritamente **proibido** utilizar este modelo para gerar prescrições clínicas diretas para pacientes, laudos ou dietas personalizadas.
                   </p>
                 </div>
              </div>
 
              {/* Chat View */}
-             <div className="flex-1 bg-[#0f1520] border border-white/5 rounded-2xl p-6 flex flex-col overflow-hidden">
+             <div className="flex-1 bg-[#0f1520] border border-white/5 rounded-2xl p-6 flex flex-col overflow-hidden max-h-[600px]">
                 <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 custom-scrollbar">
                   {aiHistory.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center opacity-70">
                       <Bot className="w-16 h-16 text-[#45dcb9]/30 mb-4" />
                       <h3 className="text-xl font-bold text-white mb-2">Supere seus Limites de Pesquisa</h3>
                       <p className="text-sm text-slate-400 max-w-sm">
-                        Resuma artigos em segundos, peça explicações sobre mecanismos metabólicos, ou obtenha ideias para criar seus próprios cursos.
+                        Resuma artigos, peça explicações sobre mecanismos metabólicos ou gere ideias para seus próprios cursos.
                       </p>
                     </div>
                   ) : (
                     aiHistory.map(msg => (
                       <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] rounded-2xl p-4 text-sm shadow-lg border ${
+                        <div className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-lg border ${
                           msg.role === 'user' 
                           ? 'bg-gradient-to-br from-[#22B391] to-[#125c4a] text-white border-transparent rounded-tr-sm'
-                          : 'bg-[#0a0f16] text-slate-300 border-white/10 rounded-tl-sm'
+                          : 'bg-[#0a0f16] text-slate-300 border-white/10 rounded-tl-sm whitespace-pre-wrap'
                         }`}>
                           {msg.content}
                         </div>
                       </div>
                     ))
+                  )}
+                  {isAiTyping && (
+                    <div className="flex justify-start">
+                       <div className="bg-[#0a0f16] text-slate-300 border border-white/10 rounded-2xl rounded-tl-sm p-4 text-sm flex items-center gap-3">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#45dcb9]" />
+                          Analisando literatura científica...
+                       </div>
+                    </div>
                   )}
                 </div>
                 
@@ -388,13 +469,18 @@ export default function EducationModule() {
                   <input
                     type="text"
                     value={aiMessage}
+                    disabled={isAiTyping}
                     onChange={(e) => setAiMessage(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendAIMessage()}
                     placeholder="Pedir para resumir uma meta-análise, explicar estudo..."
-                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm text-white px-4 py-3 placeholder:text-slate-600"
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm text-white px-4 py-3 placeholder:text-slate-600 outline-none"
                   />
-                  <button onClick={handleSendAIMessage} className="w-10 h-10 bg-[#45dcb9] text-[#0a0f16] flex items-center justify-center rounded-lg hover:bg-[#34b093] transition-colors">
-                    <Send className="w-4 h-4 ml-[-2px] relative z-10" />
+                  <button 
+                    onClick={handleSendAIMessage} 
+                    disabled={!aiMessage.trim() || isAiTyping}
+                    className="w-11 h-11 bg-[#45dcb9] text-[#0a0f16] flex items-center justify-center rounded-lg hover:bg-[#34b093] disabled:opacity-50 disabled:grayscale transition-all"
+                  >
+                    <Send className="w-4 h-4 ml-[-2px]" />
                   </button>
                 </div>
              </div>
@@ -403,7 +489,7 @@ export default function EducationModule() {
 
         {/* TAB 4: INSIGHTS & TAB 5: BIBLIOTECA */}
         {(activeTab === "insights" || activeTab === "library") && (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 text-slate-500 animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-6 text-slate-500 animate-in fade-in zoom-in-95 duration-500 py-12">
              <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-2 shadow-[inset_0_4px_20px_rgba(255,255,255,0.02)] border border-white/5">
                 {activeTab === "insights" ? <TrendingUp className="w-10 h-10 text-[#45dcb9]/50" /> : <Library className="w-10 h-10 text-[#45dcb9]/50" />}
              </div>
@@ -413,8 +499,8 @@ export default function EducationModule() {
                </h3>
                <p className="text-sm max-w-md mx-auto leading-relaxed">
                  {activeTab === "insights" 
-                   ? "A IA detecta padrões nos artigos publicados esta semana e dispara alertas de tendências clínicas."
-                   : "Busca semântica avançada em todo o acervo curado por profissionais. Use tags como #microbiota #jejum."}
+                   ? "Navegue pelo Feed Científico para gerar insights. Em breve: detecção automática de tendências em artigos populares."
+                   : "Busca semântica avançada em todo o acervo. Salve artigos do Feed para acessá-los aqui offline."}
                </p>
              </div>
              {activeTab === "library" && (
@@ -427,6 +513,16 @@ export default function EducationModule() {
         )}
 
       </main>
+
+      {/* Footer Compliance Rules */}
+      <div className="bg-[#0f1520] border-t border-white/5 p-4 text-[10px] font-bold text-slate-600 flex justify-between items-center uppercase tracking-[0.1em]">
+         <div className="flex gap-6">
+            <span className="flex items-center gap-1.5"><Shield className="w-3 h-3"/> Manter foco educacional</span>
+            <span className="flex items-center gap-1.5"><Activity className="w-3 h-3"/> Proibido Prescrição Clínica</span>
+            <span className="flex items-center gap-1.5"><BookOpen className="w-3 h-3"/> Fontes Científicas NCBI</span>
+         </div>
+         <div className="text-[#45dcb9]/50">ONNutrition — v2.5.0</div>
+      </div>
     </div>
   );
 }
