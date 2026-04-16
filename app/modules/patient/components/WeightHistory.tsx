@@ -13,7 +13,9 @@ import {
   TrendingDown,
   TrendingUp,
   Scale,
+  Scan,
 } from "lucide-react";
+import BodyScan3D from "./BodyScan3D";
 
 interface WeightRecord {
   id: string;
@@ -35,6 +37,7 @@ export default function WeightHistory({
   const [goalWeight, setGoalWeight] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [isAdding, setIsAdding] = useState(false);
+  const [showOnScan, setShowOnScan] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToCollection<WeightRecord>(
@@ -81,13 +84,22 @@ export default function WeightHistory({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900">Histórico de Peso</h3>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Pesagem
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowOnScan(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Scan className="w-4 h-4" />
+            ON Scan 3D
+          </button>
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Pesagem
+          </button>
+        </div>
       </div>
 
       {isAdding && (
@@ -225,6 +237,21 @@ export default function WeightHistory({
           </div>
         )}
       </div>
+
+      {showOnScan && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">ON Scan 3D</h3>
+            <button
+              onClick={() => setShowOnScan(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Fechar
+            </button>
+          </div>
+          <BodyScan3D patientId={patientId} />
+        </div>
+      )}
     </div>
   );
 }

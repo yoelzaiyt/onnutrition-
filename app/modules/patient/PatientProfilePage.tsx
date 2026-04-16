@@ -88,7 +88,7 @@ const patientModules: ModuleCard[] = [
   },
   {
     id: "body-scan",
-    label: "Body Scan 3D",
+    label: "ON Scan 3D",
     icon: Camera,
     description: "Avaliação por fotos com IA",
     color: "indigo",
