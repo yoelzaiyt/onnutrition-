@@ -206,15 +206,13 @@ export const LoginPage: React.FC<AuthProps> = ({
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  {!hasConfig ? "Entrar (Modo Demo)" : "Entrar"}{" "}
-                  <ArrowRight className="w-5 h-5" />
+                  {"Admin"} <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
             {(!hasConfig || isDemoEmail) && (
-              <p className="text-xs text-amber-600 text-center font-bold mt-2 bg-amber-50 p-2 rounded-lg border border-amber-100">
-                ✨ Você está no Modo Demo. Use qualquer email e senha para
-                entrar.
+              <p className="text-xs text-green-600 text-center font-bold mt-2 bg-green-50 p-2 rounded-lg border border-green-100">
+                🔐 Modo Administrador ativo
               </p>
             )}
           </form>
@@ -482,7 +480,7 @@ export const RegisterPage: React.FC<AuthProps> = ({
                   {step === 1
                     ? "Continuar"
                     : !hasConfig
-                      ? "Criar Conta (Modo Demo)"
+                      ? "Criar Conta Admin"
                       : "Criar Conta"}
                   <ArrowRight className="w-5 h-5" />
                 </>
