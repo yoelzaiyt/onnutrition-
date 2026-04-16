@@ -54,6 +54,7 @@ import FoodDiary from "./components/FoodDiary";
 import PatientChat from "./components/PatientChat";
 import PatientFiles from "./components/PatientFiles";
 import PatientFinance from "./components/PatientFinance";
+import BodyScan3D from "./components/BodyScan3D";
 
 interface ModuleCard {
   id: string;
@@ -79,6 +80,14 @@ const patientModules: ModuleCard[] = [
     icon: Scale,
     description: "Acompanhamento de peso",
     color: "emerald",
+    hasData: false,
+  },
+  {
+    id: "body-scan",
+    label: "Body Scan 3D",
+    icon: Camera,
+    description: "Avaliação por fotos com IA",
+    color: "indigo",
     hasData: false,
   },
   {
@@ -217,6 +226,7 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   files: PatientFiles,
   finance: PatientFinance,
   anthropometry: Anthropometry,
+  "body-scan": BodyScan3D,
 };
 
 const getColorClasses = (color: string, isBg = false) => {
