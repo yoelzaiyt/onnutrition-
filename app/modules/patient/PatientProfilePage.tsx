@@ -331,41 +331,37 @@ export default function PatientProfilePage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 p-3 border-b border-gray-100 overflow-x-auto">
+      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gray-50">
         <button
           onClick={handleGoBack}
           disabled={history.length === 0 && activeTab === "anamnese"}
-          className="p-2 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-30"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-30 font-medium text-slate-700"
         >
-          <ChevronLeft className="w-5 h-5 text-slate-600" />
+          <ChevronLeft className="w-5 h-5" />
+          Voltar
         </button>
 
-        <div className="flex-1 flex gap-2 overflow-x-auto">
-          {allModules.map((module) => (
-            <button
-              key={module.id}
-              onClick={() => handleModuleClick(module.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                activeTab === module.id
-                  ? "bg-[#22B391] text-white"
-                  : "bg-gray-100 text-slate-600 hover:bg-gray-200"
-              }`}
-            >
-              <module.icon className="w-4 h-4" />
-              {module.label}
-              {module.hasData && activeTab !== module.id && (
-                <CheckCircle className="w-3 h-3 text-emerald-500" />
-              )}
-            </button>
-          ))}
+        <div className="text-right">
+          <span className="text-xs text-gray-500">Módulo:</span>
+          <p className="font-bold text-[#22B391]">{currentModule?.label}</p>
         </div>
+      </div>
 
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-[#22B391] text-white" : "bg-gray-100 text-slate-600"}`}
-        >
-          <Edit className="w-5 h-5" />
-        </button>
+      <div className="flex gap-2 p-2 overflow-x-auto bg-white border-b">
+        {allModules.slice(0, 10).map((module) => (
+          <button
+            key={module.id}
+            onClick={() => handleModuleClick(module.id)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              activeTab === module.id
+                ? "bg-[#22B391] text-white"
+                : "bg-gray-100 text-slate-600 hover:bg-gray-200"
+            }`}
+          >
+            <module.icon className="w-4 h-4" />
+            {module.label.split(" ")[0]}
+          </button>
+        ))}
       </div>
 
       <main className="flex-1 overflow-y-auto p-6">
