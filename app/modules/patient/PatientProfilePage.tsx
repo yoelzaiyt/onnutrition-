@@ -1,32 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
   User,
   FileText,
-  MessageSquare,
-  DollarSign,
-  Folder,
+  Scale,
+  Stethoscope,
+  Pill,
   Utensils,
+  Brain,
   Activity,
-  ClipboardList,
-  FlaskConical,
-  Ruler,
+  Droplets,
+  Target,
+  Eye,
+  StickyNote,
   Baby,
   Calculator,
   ScrollText,
-  Target,
-  Pill,
-  ShoppingBag,
+  FlaskConical,
   TrendingUp,
+  Folder,
+  DollarSign,
+  MessageSquare,
+  Camera,
+  CheckCircle,
+  Edit,
+  Plus,
+  Settings,
   LogOut,
-  Scale,
-  Stethoscope,
-  Coffee,
-  Brain,
-  Droplets,
-  Eye,
-  StickyNote,
 } from "lucide-react";
 import { useFirebase } from "@/app/components/layout/FirebaseProvider";
 
@@ -42,221 +45,318 @@ import Hydration from "./components/Hydration";
 import GoalsPrescription from "./components/GoalsPrescription";
 import VisualAssessment from "./components/VisualAssessment";
 import Observations from "./components/Observations";
-import CompoundedPrescription from "./components/CompoundedPrescription";
-import DiagnosisEvolution from "./components/DiagnosisEvolution";
-import DietaryPrescription from "./components/DietaryPrescription";
+import PregnancyAnthro from "./components/PregnancyAnthro";
 import EnergyCalculation from "./components/EnergyCalculation";
-import FoodDiary from "./components/FoodDiary";
-import HealthQuestionnaire from "./components/HealthQuestionnaire";
+import DietaryPrescription from "./components/DietaryPrescription";
 import LabExams from "./components/LabExams";
+import DiagnosisEvolution from "./components/DiagnosisEvolution";
+import FoodDiary from "./components/FoodDiary";
 import PatientChat from "./components/PatientChat";
-import PatientDocuments from "./components/PatientDocuments";
 import PatientFiles from "./components/PatientFiles";
 import PatientFinance from "./components/PatientFinance";
-import PregnancyAnthro from "./components/PregnancyAnthro";
-import ProductList from "./components/ProductList";
 
-const menuItems = [
-  { id: "anamnese", label: "Anamnese", icon: FileText, component: Anamnese },
+interface ModuleCard {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+  color: string;
+  hasData?: boolean;
+}
+
+const patientModules: ModuleCard[] = [
   {
-    id: "anthropometry",
-    label: "Antropometria",
-    icon: Ruler,
-    component: Anthropometry,
+    id: "anamnese",
+    label: "Anamnese",
+    icon: FileText,
+    description: "Dados gerais e histórico",
+    color: "blue",
+    hasData: true,
   },
   {
     id: "weight-history",
     label: "Histórico de Peso",
     icon: Scale,
-    component: WeightHistory,
+    description: "Acompanhamento de peso",
+    color: "emerald",
+    hasData: false,
   },
   {
     id: "clinical-history",
     label: "Histórico Clínico",
     icon: Stethoscope,
-    component: ClinicalHistory,
+    description: "Condições de saúde",
+    color: "red",
+    hasData: false,
   },
   {
     id: "medications",
     label: "Meds & Suplementos",
     icon: Pill,
-    component: Medications,
+    description: "Medicamentos em uso",
+    color: "purple",
+    hasData: false,
   },
   {
     id: "eating-habits",
     label: "Hábitos Alimentares",
     icon: Utensils,
-    component: EatingHabits,
+    description: "Refeições diárias",
+    color: "orange",
+    hasData: true,
   },
-  { id: "behavior", label: "Comportamento", icon: Brain, component: Behavior },
+  {
+    id: "behavior",
+    label: "Comportamento",
+    icon: Brain,
+    description: "Humor e estresse",
+    color: "pink",
+    hasData: false,
+  },
   {
     id: "physical-activity",
     label: "Atividade Física",
     icon: Activity,
-    component: PhysicalActivity,
+    description: "Exercícios realizados",
+    color: "cyan",
+    hasData: false,
   },
   {
     id: "hydration",
     label: "Hidratação",
     icon: Droplets,
-    component: Hydration,
+    description: "Consumo de água",
+    color: "blue",
+    hasData: false,
   },
   {
     id: "goals",
     label: "Objetivos e Metas",
     icon: Target,
-    component: GoalsPrescription,
+    description: "Metas nutricionais",
+    color: "emerald",
+    hasData: false,
   },
   {
     id: "visual-assessment",
     label: "Avaliação Visual",
     icon: Eye,
-    component: VisualAssessment,
+    description: "Fotos e medições",
+    color: "indigo",
+    hasData: false,
   },
   {
     id: "observations",
     label: "Observações",
     icon: StickyNote,
-    component: Observations,
+    description: "Notas e anotações",
+    color: "slate",
+    hasData: false,
   },
+];
+
+const professionalModules: ModuleCard[] = [
   {
     id: "pregnancy",
     label: "Gestante",
     icon: Baby,
-    component: PregnancyAnthro,
+    description: "Acompanhamento gestacional",
+    color: "pink",
   },
   {
     id: "energy",
     label: "Cálculo de Energia",
     icon: Calculator,
-    component: EnergyCalculation,
+    description: "Gasto energético",
+    color: "yellow",
   },
   {
     id: "dietary",
     label: "Prescrição Dietética",
     icon: ScrollText,
-    component: DietaryPrescription,
-  },
-  {
-    id: "compounded",
-    label: "Prescrição Manipulados",
-    icon: Pill,
-    component: CompoundedPrescription,
-  },
-  {
-    id: "products",
-    label: "Lista de Produtos",
-    icon: ShoppingBag,
-    component: ProductList,
-  },
-  {
-    id: "food-diary",
-    label: "Diário Alimentar",
-    icon: Utensils,
-    component: FoodDiary,
-  },
-  {
-    id: "health-q",
-    label: "Questionário Saúde",
-    icon: ClipboardList,
-    component: HealthQuestionnaire,
+    description: "Plano alimentar",
+    color: "green",
   },
   {
     id: "lab-exams",
     label: "Exames Laboratoriais",
     icon: FlaskConical,
-    component: LabExams,
+    description: "Resultados de exames",
+    color: "amber",
   },
   {
     id: "diagnosis",
     label: "Evolução Diagnóstico",
     icon: TrendingUp,
-    component: DiagnosisEvolution,
+    description: "Progresso clínico",
+    color: "teal",
   },
-  { id: "files", label: "Arquivos", icon: Folder, component: PatientFiles },
-  {
-    id: "documents",
-    label: "Documentos",
-    icon: Folder,
-    component: PatientDocuments,
-  },
-  {
-    id: "finance",
-    label: "Financeiro",
-    icon: DollarSign,
-    component: PatientFinance,
-  },
-  { id: "chat", label: "Chat", icon: MessageSquare, component: PatientChat },
 ];
 
+const allModules = [...patientModules, ...professionalModules];
+
+const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
+  anamnese: Anamnese,
+  "weight-history": WeightHistory,
+  "clinical-history": ClinicalHistory,
+  medications: Medications,
+  "eating-habits": EatingHabits,
+  behavior: Behavior,
+  "physical-activity": PhysicalActivity,
+  hydration: Hydration,
+  goals: GoalsPrescription,
+  "visual-assessment": VisualAssessment,
+  observations: Observations,
+  pregnancy: PregnancyAnthro,
+  energy: EnergyCalculation,
+  dietary: DietaryPrescription,
+  "lab-exams": LabExams,
+  diagnosis: DiagnosisEvolution,
+  "food-diary": FoodDiary,
+  chat: PatientChat,
+  files: PatientFiles,
+  finance: PatientFinance,
+  anthropometry: Anthropometry,
+};
+
+const getColorClasses = (color: string, isBg = false) => {
+  const colors: Record<string, string> = {
+    blue: isBg ? "bg-blue-50" : "text-blue-600",
+    emerald: isBg ? "bg-emerald-50" : "text-emerald-600",
+    red: isBg ? "bg-red-50" : "text-red-600",
+    purple: isBg ? "bg-purple-50" : "text-purple-600",
+    orange: isBg ? "bg-orange-50" : "text-orange-600",
+    pink: isBg ? "bg-pink-50" : "text-pink-600",
+    cyan: isBg ? "bg-cyan-50" : "text-cyan-600",
+    indigo: isBg ? "bg-indigo-50" : "text-indigo-600",
+    slate: isBg ? "bg-slate-50" : "text-slate-600",
+    yellow: isBg ? "bg-yellow-50" : "text-yellow-600",
+    green: isBg ? "bg-green-50" : "text-green-600",
+    amber: isBg ? "bg-amber-50" : "text-amber-600",
+    teal: isBg ? "bg-teal-50" : "text-teal-600",
+  };
+  return colors[color] || colors.blue;
+};
+
 export default function PatientProfilePage() {
-  const [activeTab, setActiveTab] = useState("anamnese");
+  const [activeTab, setActiveTab] = useState<string>("anamnese");
+  const [history, setHistory] = useState<string[]>([]);
+  const [isEditing, setIsEditing] = useState(true);
   const [patientId] = useState("patient-1");
   const { user } = useFirebase();
 
-  console.log("PatientProfilePage Render:", {
-    activeTab,
-    patientId,
-    user: user?.email,
-  });
+  const handleModuleClick = (moduleId: string) => {
+    setHistory([...history, activeTab]);
+    setActiveTab(moduleId);
+  };
 
-  const ActiveComponent =
-    menuItems.find((item) => item.id === activeTab)?.component || Anamnese;
+  const handleGoBack = () => {
+    if (history.length > 0) {
+      const previous = history[history.length - 1];
+      setHistory(history.slice(0, -1));
+      setActiveTab(previous);
+    } else {
+      setActiveTab("anamnese");
+    }
+  };
+
+  const ActiveComponent = useMemo(() => {
+    return componentMap[activeTab] || Anamnese;
+  }, [activeTab]);
+
+  const currentModule = allModules.find((m) => m.id === activeTab);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-[32px] shadow-sm border border-gray-200 overflow-hidden">
-      <div className="border-b border-gray-100 bg-gray-50/50 overflow-x-auto">
-        <nav className="flex p-2 gap-1 min-w-max">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === item.id
-                  ? "bg-white text-[#27B494] shadow-sm"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <item.icon className="w-3.5 h-3.5" />
-              {item.label}
+      <div className="border-b border-gray-100 bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-6">
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center overflow-hidden">
+              <User className="w-12 h-12 text-white" />
+            </div>
+            <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors">
+              <Camera className="w-4 h-4 text-[#22B391]" />
             </button>
-          ))}
-        </nav>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-black text-white">
+              {user?.displayName || "Paciente Demo"}
+            </h2>
+            <p className="text-white/70 text-sm">
+              Prontuário: #8842 • Cadastrado em 15/03/2024
+            </p>
+            <div className="flex gap-3 mt-3">
+              <span className="px-3 py-1 bg-white/20 rounded-full text-xs text-white font-medium">
+                Ativo
+              </span>
+              <span className="px-3 py-1 bg-white/20 rounded-full text-xs text-white font-medium">
+                Nutricionista: Dra. Ana
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-white/60 text-xs">Progresso Geral</p>
+            <p className="text-3xl font-black text-white">45%</p>
+          </div>
+        </div>
       </div>
 
-      <header className="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold text-[#0B2B24]">
-            {menuItems.find((item) => item.id === activeTab)?.label}
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs font-bold text-[#0B2B24]">
-              {user?.displayName || user?.email || "Paciente Exemplo"}
-            </p>
-            <p className="text-[10px] text-gray-400 font-medium">
-              Prontuário: #8842
-            </p>
-          </div>
-          <div className="w-10 h-10 bg-[#27B494]/10 rounded-xl flex items-center justify-center text-[#27B494] font-bold overflow-hidden">
-            {user?.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              (user?.displayName?.[0] || user?.email?.[0] || "P").toUpperCase()
-            )}
-          </div>
-        </div>
-      </header>
+      <div className="flex items-center gap-2 p-3 border-b border-gray-100 overflow-x-auto">
+        <button
+          onClick={handleGoBack}
+          disabled={history.length === 0 && activeTab === "anamnese"}
+          className="p-2 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-30"
+        >
+          <ChevronLeft className="w-5 h-5 text-slate-600" />
+        </button>
 
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="min-h-full">
-          <ActiveComponent patientId={patientId} />
+        <div className="flex-1 flex gap-2 overflow-x-auto">
+          {allModules.map((module) => (
+            <button
+              key={module.id}
+              onClick={() => handleModuleClick(module.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                activeTab === module.id
+                  ? "bg-[#22B391] text-white"
+                  : "bg-gray-100 text-slate-600 hover:bg-gray-200"
+              }`}
+            >
+              <module.icon className="w-4 h-4" />
+              {module.label}
+              {module.hasData && activeTab !== module.id && (
+                <CheckCircle className="w-3 h-3 text-emerald-500" />
+              )}
+            </button>
+          ))}
         </div>
+
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-[#22B391] text-white" : "bg-gray-100 text-slate-600"}`}
+        >
+          <Edit className="w-5 h-5" />
+        </button>
+      </div>
+
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+              {history.length > 0 ? "Voltando..." : "Módulo"}
+            </p>
+            <h2 className="text-xl font-black text-[#0B2B24]">
+              {currentModule?.label || "Dados do Paciente"}
+            </h2>
+          </div>
+          <div className="flex gap-2">
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#22B391]/10 text-[#22B391] rounded-xl text-sm font-bold hover:bg-[#22B391]/20 transition-colors">
+              <Plus className="w-4 h-4" />
+              Adicionar
+            </button>
+          </div>
+        </div>
+
+        <ActiveComponent patientId={patientId} />
       </main>
     </div>
   );
