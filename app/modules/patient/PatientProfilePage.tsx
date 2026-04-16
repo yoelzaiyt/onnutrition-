@@ -169,10 +169,10 @@ const professionalModules: ModuleCard[] = [
     color: "violet",
   },
   {
-    id: "education",
-    label: "Educação & IA",
+    id: "cursos",
+    label: "Cursos & Formação",
     icon: BookOpen,
-    description: "Cursos, Descobertas, Biblioteca",
+    description: "Formação científica e profissional",
     color: "blue",
   },
   {
@@ -238,7 +238,7 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   anthropometry: Anthropometry,
   "body-scan": BodyScan3D,
   professional: ProfessionalModule,
-  education: EducationModule,
+  cursos: EducationModule,
 };
 
 const getColorClasses = (color: string, isBg = false) => {

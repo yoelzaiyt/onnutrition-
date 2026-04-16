@@ -2,42 +2,49 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  BookOpen,
-  Search,
   GraduationCap,
+  BookOpen,
   Lightbulb,
+  Brain,
+  Search,
   Play,
   FileText,
   Video,
-  CheckCircle,
   Clock,
   Users,
-  Brain,
-  Award,
   Star,
+  Award,
   ChevronRight,
-  Lock,
-  Download,
-  Share,
-  Tag,
+  CheckCircle,
+  File,
+  Library,
+  Sparkles,
+  TrendingUp,
+  Target,
+  Calendar,
+  Bell,
   Filter,
   Plus,
   X,
   Send,
   MessageSquare,
-  File,
-  Headphones,
+  ExternalLink,
+  Bookmark,
+  Download,
+  Share2,
   BarChart3,
-  TrendingUp,
-  Calendar,
   Zap,
-  User,
   Shield,
   AlertCircle,
-  ArrowRight,
+  FlaskConical,
+  Newspaper,
+  SearchCode,
+  Bot,
+  BookMarked,
+  GraduationCap as Cap,
+  Microscope,
+  Activity,
 } from "lucide-react";
-import { useFirebase } from "@/app/components/layout/FirebaseProvider";
-import { addDocument, subscribeToCollection } from "@/app/lib/firestore-utils";
 
 interface Course {
   id: string;
@@ -55,6 +62,7 @@ interface Course {
   isFree: boolean;
   certificate: boolean;
   tags: string[];
+  progress?: number;
 }
 
 interface Article {
@@ -65,240 +73,204 @@ interface Article {
   year: number;
   evidenceLevel: "alta" | "moderada" | "baixa";
   area: string;
-  forPatient: boolean;
+  forProfessional: boolean;
   tags: string[];
   readTime: number;
+  date: string;
+  imageUrl?: string;
 }
 
-interface Lesson {
+interface LibraryItem {
   id: string;
-  courseId: string;
   title: string;
-  type: "video" | "pdf" | "quiz";
-  duration: string;
-  completed: boolean;
-}
-
-interface Progress {
-  courseId: string;
-  completedLessons: number;
-  totalLessons: number;
-  lastAccess: string;
-}
-
-interface UserProgress {
-  courseId: string;
-  lessonId: string;
-  completed: boolean;
-  completedAt?: string;
+  type: "article" | "course" | "study" | "material";
+  category: string;
+  tags: string[];
+  dateAdded: string;
+  favorite: boolean;
 }
 
 const sampleCourses: Course[] = [
   {
     id: "1",
-    title: "Fundamentos da Alimentação Saudável",
-    description:
-      "Aprenda os conceitos básicos de nutrição para uma vida mais saudável",
-    category: "Básico",
-    modules: 8,
-    duration: "2h30",
-    level: "iniciante",
+    title: "Nutrição Clínica Avançada",
+    description: "Abordagem multidisciplinar em nutrology e dietoterapia",
+    category: "Nutrição Clínica",
+    modules: 12,
+    duration: "40h",
+    level: "avancado",
     instructor: "Dra. Ana Santos",
+    rating: 4.9,
+    students: 856,
+    price: 497,
+    isFree: false,
+    certificate: true,
+    tags: ["clínica", "dietoterapia", "avançado"],
+    progress: 35,
+  },
+  {
+    id: "2",
+    title: "Metabolismo e Termogênese",
+    description: "Fisiologia metabólica para prática profissional",
+    category: "Metabolismo",
+    modules: 8,
+    duration: "24h",
+    level: "intermediario",
+    instructor: "Dr. Carlos Lima",
     rating: 4.8,
     students: 1240,
     price: 0,
     isFree: true,
     certificate: true,
-    tags: ["alimentação", "saúde", "básico"],
-  },
-  {
-    id: "2",
-    title: "Entendendo Rótulos Nutricionais",
-    description: "Como ler e interpretar rótulos de alimentos corretamente",
-    category: "Consciência Alimentar",
-    modules: 4,
-    duration: "1h15",
-    level: "iniciante",
-    instructor: "Dr. Carlos Lima",
-    rating: 4.9,
-    students: 890,
-    price: 0,
-    isFree: true,
-    certificate: true,
-    tags: ["rótulos", "consumo", "consciência"],
+    tags: ["metabolismo", "fisiologia", "intermediário"],
+    progress: 100,
   },
   {
     id: "3",
-    title: "Nutrição para Performance Esportiva",
-    description: "Optimize sua performance com alimentação adequada",
-    category: "Esportivo",
-    modules: 12,
-    duration: "4h00",
-    level: "avancado",
-    instructor: "Dra. Ana Santos",
+    title: "Comportamento Alimentar",
+    description: "Psicologia da alimentação e manejo comportamental",
+    category: "Comportamento",
+    modules: 10,
+    duration: "30h",
+    level: "intermediario",
+    instructor: "Dra. Maria Chen",
     rating: 4.7,
     students: 560,
-    price: 197,
+    price: 297,
+    isFree: false,
+    certificate: true,
+    tags: ["psicologia", "comportamento", "TCC"],
+    progress: 0,
+  },
+  {
+    id: "4",
+    title: "Nutrição Esportiva de Elite",
+    description: "Protocolos para atletas de alta performance",
+    category: "Esportivo",
+    modules: 15,
+    duration: "45h",
+    level: "avancado",
+    instructor: "Prof. João Silva",
+    rating: 4.9,
+    students: 320,
+    price: 697,
     isFree: false,
     certificate: true,
     tags: ["esporte", "performance", "atleta"],
   },
   {
-    id: "4",
-    title: "Introdução ao Microbioma Intestinal",
-    description:
-      "Compreenda a importância das bactérias intestinais para sua saúde",
+    id: "5",
+    title: "Microbioma Intestinal",
+    description: "Atualização científica sobre ejeção e microbioma",
     category: "Ciência",
     modules: 6,
-    duration: "2h00",
-    level: "intermediario",
-    instructor: "Dra. Maria Chen",
-    rating: 4.9,
-    students: 320,
-    price: 97,
+    duration: "18h",
+    level: "avancado",
+    instructor: "Dra. Pedro Alves",
+    rating: 4.6,
+    students: 890,
+    price: 197,
     isFree: false,
     certificate: true,
-    tags: ["microbioma", "ciência", "saúde"],
+    tags: ["microbioma", "intestino", "pesquisa"],
   },
 ];
 
 const sampleArticles: Article[] = [
   {
     id: "1",
-    title: "Dieta mediterrânea reduz risco cardiovascular",
+    title: "Dieta mediterrânea reduz risco cardiovascular em 30%",
     summary:
-      "Estudo mostra que adoção da dieta mediterrânea pode reduzir em até 30% o risco de doenças cardíacas.",
+      "Meta-análise com 12.000 participantes demonstra proteção cardiovascular significativa",
     source: "NEJM",
-    year: 2024,
+    year: 2025,
     evidenceLevel: "alta",
     area: "Cardiovascular",
-    forPatient: true,
+    forProfessional: true,
     tags: ["dieta", "coração", "prevenção"],
-    readTime: 3,
+    readTime: 5,
+    date: "2025-04-15",
   },
   {
     id: "2",
-    title: "Jejum intermitente: o que a ciência diz",
+    title: "Jejum intermitente: eficácia e segurança",
     summary:
-      "Meta-análise revela efeitos do jejum intermitente na perda de peso e metabolismo.",
+      "Revisão sistemática avalia efeitos do jejum intermitente na composição corporal",
     source: "Lancet",
-    year: 2023,
+    year: 2025,
     evidenceLevel: "alta",
     area: "Emagrecimento",
-    forPatient: true,
+    forProfessional: true,
     tags: ["jejum", "emagrecimento", "metabolismo"],
-    readTime: 4,
+    readTime: 7,
+    date: "2025-04-14",
   },
   {
     id: "3",
-    title: "Proteína vegetal vs animal: mito ou verdade?",
+    title: "Nova diretriz da ABA sobre manejo daobesidade",
     summary:
-      "Comparação científica entre fontes proteicas vegetais e animais para atletas.",
+      "Atualização das diretrizes para tratamento multiprofissional daobesidade",
+    source: "ABP",
+    year: 2025,
+    evidenceLevel: "alta",
+    area: "Obesidade",
+    forProfessional: true,
+    tags: ["diretriz", "obesidade", "protocolo"],
+    readTime: 8,
+    date: "2025-04-13",
+  },
+  {
+    id: "4",
+    title: "Probióticos e função imunológica",
+    summary: "Estudo revela mecanismos de ação dos probióticos na imunidade",
+    source: "Cell",
+    year: 2025,
+    evidenceLevel: "alta",
+    area: "Microbiota",
+    forProfessional: true,
+    tags: ["probióticos", "imunidade", "microbioma"],
+    readTime: 6,
+    date: "2025-04-12",
+  },
+  {
+    id: "5",
+    title: "Proteína vegetal vs animal para atletas",
+    summary:
+      "Comparação de biodisponibilidade proteica entre fontes vegetais e animais",
     source: "JISSN",
-    year: 2024,
+    year: 2025,
     evidenceLevel: "alta",
     area: "Esportivo",
-    forPatient: false,
+    forProfessional: true,
     tags: ["proteína", "esporte", "atleta"],
-    readTime: 5,
-  },
-  {
-    id: "4",
-    title: "Impacto do睡眠 na composição corporal",
-    summary:
-      "Como a qualidade do sono influencia no metabolismo e composição corporal.",
-    source: "Cell Metabolism",
-    year: 2024,
-    evidenceLevel: "alta",
-    area: "Sono",
-    forPatient: true,
-    tags: ["sono", "metabolismo", "composição"],
-    readTime: 4,
-  },
-  {
-    id: "5",
-    title: "Fibras e saciedade: mecanismo científico",
-    summary:
-      "Entenda o mecanismo científico que faz as fibras promoverem saciedade prolongada.",
-    source: "American Journal",
-    year: 2023,
-    evidenceLevel: "moderada",
-    area: "Saciiedade",
-    forPatient: true,
-    tags: ["fibras", "saciedade", "fome"],
-    readTime: 3,
-  },
-];
-
-const patientEducationalContent = [
-  {
-    id: "1",
-    title: "Como Montar Prato Equilibrado",
-    description: "Guia passo a passo para refeição",
-    type: "guide",
-    category: "Educação Aplicada",
-    icon: "🍽️",
-  },
-  {
-    id: "2",
-    title: "Entendendo Gorduras",
-    description: "Quais são saudáveis",
-    type: "micro_lesson",
-    category: "Nutrição",
-    icon: "🧈",
-  },
-  {
-    id: "3",
-    title: "Quanto Proteína Preciso?",
-    description: "Calculadora básica",
-    type: "simulator",
-    category: "Cálculo",
-    icon: "💪",
-  },
-  {
-    id: "4",
-    title: "Por que Fiber?",
-    description: "Benefícios das fibras",
-    type: "insight",
-    category: "Saúde",
-    icon: "🌾",
-  },
-  {
-    id: "5",
-    title: "Água: Quanto Beber?",
-    description: "Calculadora de hidratação",
-    type: "simulator",
-    category: "Hidratação",
-    icon: "💧",
+    readTime: 6,
+    date: "2025-04-11",
   },
   {
     id: "6",
-    title: "Escolhas em Restaurantes",
-    description: "Dicas para comer fora",
-    type: "guide",
-    category: "Educação Aplicada",
-    icon: "🍴",
-  },
-  {
-    id: "7",
-    title: "Leitura de Rótulos",
-    description: "Como interpretar ingredientes",
-    type: "guide",
-    category: "Educação Aplicada",
-    icon: "🏷️",
-  },
-  {
-    id: "8",
-    title: "Substituições Saudáveis",
-    description: "Alternativas aos alimentos",
-    type: "guide",
-    category: "Educação Aplicada",
-    icon: "🔄",
+    title: "Impacto do sono na composição corporal",
+    summary:
+      "Como a qualidade do sono influencia no metabolismo e composição corporal",
+    source: "Cell Metabolism",
+    year: 2025,
+    evidenceLevel: "alta",
+    area: "Sono",
+    forProfessional: true,
+    tags: ["sono", "metabolismo", "composição"],
+    readTime: 5,
+    date: "2025-04-10",
   },
 ];
 
-export default function EducationModule() {
-  const { user } = useFirebase();
+const professionalTabs = [
+  { id: "courses", label: "Cursos", icon: GraduationCap },
+  { id: "feed", label: "Feed Científico", icon: Newspaper },
+  { id: "library", label: "Biblioteca", icon: Library },
+  { id: "assistant", label: "IA Co-Piloto", icon: Bot },
+  { id: "insights", label: "Insights", icon: Lightbulb },
+];
+
+export default function CursosModule() {
   const [activeTab, setActiveTab] = useState("courses");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -307,28 +279,8 @@ export default function EducationModule() {
   const [aiHistory, setAiHistory] = useState<
     { role: string; content: string }[]
   >([]);
-  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [showCourseDetail, setShowCourseDetail] = useState<Course | null>(null);
-
-  const isProfessional = false;
-
-  const tabs = [
-    { id: "courses", label: "Cursos", icon: GraduationCap },
-    { id: "discoveries", label: "Descobertas", icon: Lightbulb },
-    { id: "library", label: "Biblioteca", icon: BookOpen },
-    { id: "learn", label: "Prático", icon: Play },
-    { id: "assistant", label: "Assistente IA", icon: Brain },
-    { id: "progress", label: "Meu Progresso", icon: TrendingUp },
-  ];
-
-  const professionalTabs = [
-    { id: "courses", label: "Cursos", icon: GraduationCap },
-    { id: "discoveries", label: "Descobertas", icon: Lightbulb },
-    { id: "library", label: "Biblioteca", icon: BookOpen },
-    { id: "assistant", label: "Assistente IA", icon: Brain },
-  ];
-
-  const userTabs = isProfessional ? professionalTabs : tabs;
 
   const filteredCourses = sampleCourses.filter((course) => {
     const matchSearch = course.title
@@ -343,8 +295,7 @@ export default function EducationModule() {
     const matchSearch = article.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchPatient = !isProfessional || !article.forPatient;
-    return matchSearch && matchPatient;
+    return matchSearch;
   });
 
   const handleSendAIMessage = () => {
@@ -358,40 +309,24 @@ export default function EducationModule() {
       let response = "";
       const lowerMessage = userMessage.toLowerCase();
 
-      if (
-        lowerMessage.includes("dieta") ||
-        lowerMessage.includes("emagrecer") ||
-        lowerMessage.includes("perder peso")
-      ) {
+      if (lowerMessage.includes("artigo") || lowerMessage.includes("estudo")) {
         response =
-          "Para orientação personalizada e planos de dieta específicos, recomendo que você marque uma consulta com um nutricionista. Posso explicar conceitos gerais sobre alimentação equilibrada, mas cada pessoa tem necessidades específicas!";
+          "Posso ajudá-lo a encontrar artigos científicos relevantes. Qual tema você está pesquisando?";
       } else if (
-        lowerMessage.includes("receita") ||
-        lowerMessage.includes("comida")
+        lowerMessage.includes("curso") ||
+        lowerMessage.includes("formação")
       ) {
         response =
-          'Posso explicar sobre grupos alimentares e combinações saudáveis. Para receitas específicas, recomendo nossos cursos práticos na aba "Cursos"!';
+          "Temos diversos cursos de formação profissional. Posso indicar basedo na sua área de interesse!";
       } else if (
-        lowerMessage.includes("proteína") ||
-        lowerMessage.includes("proteina")
+        lowerMessage.includes("resum") ||
+        lowerMessage.includes("resumo")
       ) {
         response =
-          "A proteína é essencial para construção muscular e manutenção dos tecidos. fontes saudáveis incluem: carnes magras, peixes, ovos, leguminosas e laticínios. A quantidade ideal depende do seu nível de atividade física!";
-      } else if (
-        lowerMessage.includes("vitamina") ||
-        lowerMessage.includes("mineral")
-      ) {
-        response =
-          "Vitaminas e minerais são essenciais para o metabolismo. Cada vitamina tem funções específicas no corpo. Uma alimentação equilibrada e variada é a melhor forma de obter todos os nutrientes necessários!";
-      } else if (
-        lowerMessage.includes("gordura") ||
-        lowerMessage.includes("gordura")
-      ) {
-        response =
-          "Existem diferentes tipos de gorduras: saturadas (use com moderação), gordura trans (evite), e gorduras insaturadas (saudáveis - azeite, abacate, nuts). As gorduras saudáveis são importantes para absorção de vitaminas e saúde cardiovascular.";
+          "Posso gerar resumos simplificados ou técnicos de artigos científicos. Qual conteúdo você gostaria de resumir?";
       } else {
         response =
-          "Entendo sua dúvida! Posso ajudar explicando conceitos nutricionais baseados em ciência. Para dúvidas específicas sobre sua saúde, marque uma consulta com um profissional!";
+          "Sou seu assistente educacional. Posso ajudar com:\n\n📚 Buscar artigos científicos\n🎓 Indicar cursos profissionalizantes\n📝 Criar resumos educacionais\n🔬 Explicar conceitos técnicos\n\nComo posso ajudar hoje?";
       }
 
       setAiHistory((prev) => [
@@ -402,10 +337,19 @@ export default function EducationModule() {
   };
 
   const getCourseProgress = (courseId: string) => {
-    const progress = userProgress.filter(
-      (p) => p.courseId === courseId && p.completed,
-    );
-    return Math.round((progress.length / 3) * 100);
+    const course = sampleCourses.find((c) => c.id === courseId);
+    return course?.progress || 0;
+  };
+
+  const getEvidenceColor = (level: string) => {
+    switch (level) {
+      case "alta":
+        return "bg-green-100 text-green-700";
+      case "moderada":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-red-100 text-red-700";
+    }
   };
 
   const renderCoursesTab = () => (
@@ -427,8 +371,9 @@ export default function EducationModule() {
           className="px-4 py-3 border border-gray-200 rounded-xl"
         >
           <option value="">Todas as categorias</option>
-          <option value="Básico">Básico</option>
-          <option value="Consciência Alimentar">Consciência</option>
+          <option value="Nutrição Clínica">Nutrição Clínica</option>
+          <option value="Metabolismo">Metabolismo</option>
+          <option value="Comportamento">Comportamento</option>
           <option value="Esportivo">Esportivo</option>
           <option value="Ciência">Ciência</option>
         </select>
@@ -447,6 +392,11 @@ export default function EducationModule() {
                   GRÁTIS
                 </span>
               )}
+              {course.progress !== undefined && course.progress > 0 && (
+                <span className="absolute top-3 right-3 px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
+                  {course.progress}% concluído
+                </span>
+              )}
               <GraduationCap className="w-12 h-12 text-white/50" />
             </div>
             <div className="p-4">
@@ -461,12 +411,16 @@ export default function EducationModule() {
               <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                 {course.description}
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div
-                  className="bg-[#22B391] h-2 rounded-full"
-                  style={{ width: `${getCourseProgress(course.id)}%` }}
-                />
-              </div>
+
+              {course.progress !== undefined && course.progress > 0 && (
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-[#22B391] h-2 rounded-full"
+                    style={{ width: `${course.progress}%` }}
+                  />
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1 text-gray-500">
                   <Clock className="w-4 h-4" /> {course.duration}
@@ -490,35 +444,33 @@ export default function EducationModule() {
     </div>
   );
 
-  const renderDiscoveriesTab = () => (
+  const renderFeedTab = () => (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl">
-        <h3 className="font-bold text-gray-900 mb-2">
-          Descobertas Científicas
-        </h3>
-        <p className="text-sm text-gray-600">
-          Stay updated with the latest nutritional science discoveries,
-          simplified for your understanding.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+            HOJE
+          </span>
+          <span className="text-sm text-gray-500">
+            {new Date().toLocaleDateString("pt-BR")}
+          </span>
+        </div>
+        <button className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg text-sm">
+          <Filter className="w-4 h-4" /> Filtrar
+        </button>
       </div>
 
       <div className="space-y-4">
         {filteredArticles.map((article) => (
           <div
             key={article.id}
-            className="bg-white p-5 rounded-2xl border border-gray-200"
+            className="bg-white p-5 rounded-2xl border border-gray-200 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      article.evidenceLevel === "alta"
-                        ? "bg-green-100 text-green-700"
-                        : article.evidenceLevel === "moderada"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                    }`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${getEvidenceColor(article.evidenceLevel)}`}
                   >
                     Evidência {article.evidenceLevel}
                   </span>
@@ -538,8 +490,21 @@ export default function EducationModule() {
                   <span className="text-gray-500">{article.area}</span>
                 </div>
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg">
-                <ArrowRight className="w-5 h-5 text-[#22B391]" />
+              <div className="flex flex-col gap-2">
+                <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <Bookmark className="w-5 h-5 text-gray-400" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <Share2 className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <button className="flex items-center gap-2 text-[#22B391] font-medium text-sm">
+                <Sparkles className="w-4 h-4" /> Gerar resumo IA
+              </button>
+              <button className="flex items-center gap-2 text-gray-600 text-sm hover:text-[#22B391]">
+                Ver artigo completo <ExternalLink className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -554,47 +519,56 @@ export default function EducationModule() {
         <button className="p-4 bg-white rounded-xl border border-gray-200 hover:border-[#22B391] transition-colors text-center">
           <FileText className="w-8 h-8 mx-auto mb-2 text-blue-500" />
           <span className="text-sm font-medium">Artigos</span>
-          <p className="text-xs text-gray-500">24</p>
+          <p className="text-xs text-gray-500">156</p>
         </button>
         <button className="p-4 bg-white rounded-xl border border-gray-200 hover:border-[#22B391] transition-colors text-center">
           <Video className="w-8 h-8 mx-auto mb-2 text-purple-500" />
           <span className="text-sm font-medium">Vídeos</span>
-          <p className="text-xs text-gray-500">18</p>
+          <p className="text-xs text-gray-500">42</p>
         </button>
         <button className="p-4 bg-white rounded-xl border border-gray-200 hover:border-[#22B391] transition-colors text-center">
           <BookOpen className="w-8 h-8 mx-auto mb-2 text-green-500" />
-          <span className="text-sm font-medium">Guias</span>
-          <p className="text-xs text-gray-500">12</p>
+          <span className="text-sm font-medium">E-books</span>
+          <p className="text-xs text-gray-500">28</p>
         </button>
         <button className="p-4 bg-white rounded-xl border border-gray-200 hover:border-[#22B391] transition-colors text-center">
-          <Headphones className="w-8 h-8 mx-auto mb-2 text-orange-500" />
-          <span className="text-sm font-medium">Áudios</span>
-          <p className="text-xs text-gray-500">8</p>
+          <FlaskConical className="w-8 h-8 mx-auto mb-2 text-orange-500" />
+          <span className="text-sm font-medium">Estudos</span>
+          <p className="text-xs text-gray-500">64</p>
         </button>
       </div>
-    </div>
-  );
 
-  const renderLearnTab = () => (
-    <div className="space-y-6">
-      <h3 className="font-bold text-gray-900 text-lg">
-        Aprendizado Personalizado
-      </h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {patientEducationalContent.map((item) => (
-          <button
-            key={item.id}
-            className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-200 hover:border-[#22B391] transition-colors text-left"
-          >
-            <span className="text-3xl">{item.icon}</span>
-            <div className="flex-1">
-              <h4 className="font-bold text-gray-900">{item.title}</h4>
-              <p className="text-xs text-gray-500">{item.category}</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+      <div className="bg-white p-6 rounded-2xl border border-gray-200">
+        <h4 className="font-bold text-gray-900 mb-4">Busca Inteligente</h4>
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar na biblioteca..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#22B391]"
+            />
+          </div>
+          <button className="px-4 py-2 bg-[#22B391] text-white rounded-xl hover:bg-[#1a9580]">
+            Buscar
           </button>
-        ))}
+        </div>
+        <div className="flex flex-wrap gap-2 mt-3">
+          {[
+            "Nutrição Clínica",
+            "Microbioma",
+            "Obesidade",
+            "Performance",
+            "Diabetes",
+          ].map((tag) => (
+            <button
+              key={tag}
+              className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gray-200"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -603,34 +577,51 @@ export default function EducationModule() {
     <div className="space-y-4">
       <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-2xl text-white">
         <div className="flex items-center gap-3">
-          <Brain className="w-6 h-6" />
+          <Bot className="w-6 h-6" />
           <div>
-            <h4 className="font-bold">Assistente Educacional</h4>
+            <h4 className="font-bold">IA Co-Piloto Profissional</h4>
             <p className="text-xs text-white/70">
-              Posso explicar conceitos, resumir conteúdos
+              Suporte técnico-educacional para profissionais
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
+      <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl">
         <div className="flex items-start gap-2">
-          <Shield className="w-5 h-5 text-red-600 mt-0.5" />
-          <p className="text-sm text-red-700">
-            <strong>⚠️ Importante:</strong> Sou um assistente educacional. Não
-            prescrevo dietas, planos alimentares ou diagnósticos. Para
-            orientação personalizada, consulte seu nutricionista!
+          <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+          <p className="text-sm text-blue-700">
+            <strong>Informação importante:</strong> Este assistente é destinado
+            ONLY para suporte técnico-educacional. Não faz prescrições clínicas,
+            dietas personalizadas ou diagnósticos.
           </p>
         </div>
       </div>
 
-      <div className="h-80 overflow-y-auto space-y-3 p-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { icon: FileText, label: "Resumir Artigos" },
+          { icon: BookOpen, label: "Explicar Estudos" },
+          { icon: GraduationCap, label: "Ideias de Cursos" },
+          { icon: Lightbulb, label: "Criar Resumos" },
+        ].map((item, i) => (
+          <button
+            key={i}
+            className="p-3 bg-white rounded-xl border border-gray-200 hover:border-[#22B391] text-center"
+          >
+            <item.icon className="w-6 h-6 mx-auto mb-1 text-[#22B391]" />
+            <span className="text-xs font-medium">{item.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="h-80 overflow-y-auto space-y-3 p-2 bg-gray-50 rounded-xl">
         {aiHistory.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <Brain className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-            <p>Faça uma pergunta sobre nutrição!</p>
+            <Bot className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+            <p>Como posso ajudá-lo hoje?</p>
             <p className="text-xs text-gray-400 mt-1">
-              Ex: "Para que serve a proteína?"
+              Pergunte sobre artigos, cursos ou conceitos técnicos
             </p>
           </div>
         ) : (
@@ -640,11 +631,7 @@ export default function EducationModule() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                  msg.role === "user"
-                    ? "bg-[#22B391] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
+                className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.role === "user" ? "bg-[#22B391] text-white" : "bg-white text-gray-700 border"}`}
               >
                 {msg.content}
               </div>
@@ -659,7 +646,7 @@ export default function EducationModule() {
           value={aiMessage}
           onChange={(e) => setAiMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendAIMessage()}
-          placeholder="Digite sua dúvida..."
+          placeholder="Digite sua dúvida técnica..."
           className="flex-1 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#22B391]"
         />
         <button
@@ -672,7 +659,7 @@ export default function EducationModule() {
     </div>
   );
 
-  const renderProgressTab = () => (
+  const renderInsightsTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl">
@@ -682,13 +669,13 @@ export default function EducationModule() {
         </div>
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl">
           <Clock className="w-8 h-8 text-blue-600 mb-2" />
-          <p className="text-2xl font-black text-blue-700">12h</p>
+          <p className="text-2xl font-black text-blue-700">48h</p>
           <p className="text-xs text-blue-600">Tempo de Estudo</p>
         </div>
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl">
           <BookOpen className="w-8 h-8 text-purple-600 mb-2" />
           <p className="text-2xl font-black text-purple-700">24</p>
-          <p className="text-xs text-purple-600">Conteúdos Acessados</p>
+          <p className="text-xs text-purple-600">Artigos Lidos</p>
         </div>
         <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl">
           <Award className="w-8 h-8 text-orange-600 mb-2" />
@@ -703,7 +690,7 @@ export default function EducationModule() {
         </h4>
         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
           <div className="w-12 h-12 bg-[#22B391] rounded-xl flex items-center justify-center">
-            <ArrowRight className="w-6 h-6 text-white" />
+            <ChevronRight className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
             <h5 className="font-medium text-gray-900">Nutrição Avançada</h5>
@@ -733,9 +720,9 @@ export default function EducationModule() {
             <span className="text-2xl">📚</span>
             <p className="text-xs">Leitor</p>
           </div>
-          <div className="p-3 bg-white rounded-xl text-center opacity-50">
-            <span className="text-2xl">🏆</span>
-            <p className="text-xs">Mestre</p>
+          <div className="p-3 bg-white rounded-xl text-center">
+            <Sparkles className="w-8 h-8 mx-auto text-amber-500" />
+            <p className="text-xs font-medium">Especialista</p>
           </div>
         </div>
       </div>
@@ -746,16 +733,14 @@ export default function EducationModule() {
     switch (activeTab) {
       case "courses":
         return renderCoursesTab();
-      case "discoveries":
-        return renderDiscoveriesTab();
+      case "feed":
+        return renderFeedTab();
       case "library":
         return renderLibraryTab();
-      case "learn":
-        return renderLearnTab();
       case "assistant":
         return renderAssistantTab();
-      case "progress":
-        return renderProgressTab();
+      case "insights":
+        return renderInsightsTab();
       default:
         return renderCoursesTab();
     }
@@ -766,19 +751,19 @@ export default function EducationModule() {
       <div className="border-b border-gray-100 bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-white" />
+            <GraduationCap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white">
-              Educação & Inteligência Nutricional
-            </h2>
-            <p className="text-xs text-white/70">Aprenda, Descubra, Evolua</p>
+            <h2 className="text-lg font-black text-white">Cursos & Formação</h2>
+            <p className="text-xs text-white/70">
+              Formação profissional e atualização científica
+            </p>
           </div>
         </div>
       </div>
 
       <div className="flex border-b border-gray-100 overflow-x-auto">
-        {userTabs.map((tab) => (
+        {professionalTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
