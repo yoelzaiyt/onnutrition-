@@ -75,7 +75,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   simbolico: {
     name: "Simbólico",
-    price: 1.0,
+    price: 0.01,
     features: [
       "Acesso completo",
       "Todos os cursos",
