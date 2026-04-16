@@ -109,14 +109,8 @@ const TopNav: React.FC<TopNavProps> = ({
 
   const filteredNavItems = NAV_ITEMS.filter((item) => {
     if (item.id === "setup") return isAdmin;
-    if (item.id === "data") return isAdmin || userRole === "nutri";
+    if (item.id === "data") return isAdmin;
     if (item.id === "generate-data") return isAdmin;
-    if (item.id === "dashboard") return userRole !== "patient";
-    if (item.id === "calendar") return userRole !== "patient";
-    if (item.id === "patients") return userRole !== "patient";
-    if (item.id === "finance") return userRole !== "patient";
-    if (item.id === "flow" || item.id === "anamnesis" || item.id === "medical")
-      return userRole !== "patient";
     return true;
   });
 

@@ -187,12 +187,12 @@ export default function Home() {
         onRegister={() => setView("register")}
         onDemoMode={() => {
           setUser({
-            id: "demo-nutri-id",
-            email: "nutri.demo@onnutrition.com",
-            user_metadata: { full_name: "Dra. Ana Demo" },
+            id: "demo-patient-id",
+            email: "paciente.demo@onnutrition.com",
+            user_metadata: { full_name: "Paciente Demo" },
           });
-          setUserRole("nutri");
-          setView("dashboard");
+          setUserRole("patient");
+          setView("anamnesis");
         }}
         hasConfig={isSupabaseConfigured}
       />
