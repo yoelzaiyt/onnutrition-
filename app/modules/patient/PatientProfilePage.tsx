@@ -32,6 +32,7 @@ import {
   LogOut,
   Award,
   BookOpen,
+  Package,
 } from "lucide-react";
 import { useFirebase } from "@/app/components/layout/FirebaseProvider";
 
@@ -59,6 +60,10 @@ import PatientFinance from "./components/PatientFinance";
 import BodyScan3D from "./components/BodyScan3D";
 import ProfessionalModule from "./components/ProfessionalModule";
 import EducationModule from "./components/EducationModule";
+import HealthQuestionnaire from "./components/HealthQuestionnaire";
+import CompoundedPrescription from "./components/CompoundedPrescription";
+import ProductList from "./components/ProductList";
+import PatientDocuments from "./components/PatientDocuments";
 
 interface ModuleCard {
   id: string;
@@ -210,6 +215,76 @@ const professionalModules: ModuleCard[] = [
     description: "Progresso clínico",
     color: "teal",
   },
+  {
+    id: "food-diary",
+    label: "Diário Alimentar",
+    icon: Utensils,
+    description: "Registro de refeições",
+    color: "orange",
+  },
+  {
+    id: "questionnaire",
+    label: "Questionário",
+    icon: FileText,
+    description: "Questionário de saúde",
+    color: "indigo",
+  },
+  {
+    id: "anthropometry",
+    label: "Antropometria",
+    icon: Scale,
+    description: "Medidas corporais",
+    color: "emerald",
+  },
+  {
+    id: "pregnancy",
+    label: "Gestantes",
+    icon: Baby,
+    description: "Acompanhamento gestacional",
+    color: "pink",
+  },
+  {
+    id: "energy",
+    label: "Cálculo Energético",
+    icon: Calculator,
+    description: "Gasto energético",
+    color: "yellow",
+  },
+  {
+    id: "dietary",
+    label: "Prescrição Dietética",
+    icon: ScrollText,
+    description: "Plano alimentar",
+    color: "green",
+  },
+  {
+    id: "goals",
+    label: "Metas",
+    icon: Target,
+    description: "Objetivos do paciente",
+    color: "blue",
+  },
+  {
+    id: "compounded",
+    label: "Manipulados",
+    icon: Pill,
+    description: "Prescrição de manipulados",
+    color: "purple",
+  },
+  {
+    id: "products",
+    label: "Produtos/Orientações",
+    icon: Package,
+    description: "Lista de produtos",
+    color: "amber",
+  },
+  {
+    id: "patient-documents",
+    label: "Prontuário",
+    icon: Folder,
+    description: "Documentos do paciente",
+    color: "slate",
+  },
 ];
 
 const allModules = [...patientModules, ...professionalModules];
@@ -239,6 +314,10 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   "body-scan": BodyScan3D,
   professional: ProfessionalModule,
   cursos: EducationModule,
+  questionnaire: HealthQuestionnaire,
+  compounded: CompoundedPrescription,
+  products: ProductList,
+  "patient-documents": PatientDocuments,
 };
 
 const getColorClasses = (color: string, isBg = false) => {
