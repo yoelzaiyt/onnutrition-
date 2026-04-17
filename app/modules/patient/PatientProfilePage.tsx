@@ -170,9 +170,9 @@ const professionalModules: ModuleCard[] = [
   },
   {
     id: "cursos",
-    label: "CURSOS",
+    label: "Cursos & Formação",
     icon: BookOpen,
-    description: "Formação, Notícias e Biblioteca",
+    description: "Formação científica e profissional",
     color: "blue",
   },
   {
@@ -340,7 +340,7 @@ export default function PatientProfilePage() {
       </div>
 
       <div className="flex gap-2 p-3 overflow-x-auto bg-white border-b">
-        {allModules.map((module) => (
+        {allModules.slice(0, 10).map((module) => (
           <button
             key={module.id}
             onClick={() => handleModuleClick(module.id)}

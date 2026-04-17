@@ -22,7 +22,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "atender_pacientes",
     "acessar_modulo_profissional",
   ],
-  nutricionista_chefe: [
+  nutritionist_chefe: [
     "criar_nutricionistas",
     "aprovar_cadastros",
     "criar_conteudos",
@@ -30,7 +30,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "atender_pacientes",
     "acessar_modulo_profissional",
   ],
-  nutricionista: [
+  nutritionist: [
     "atender_pacientes",
     "criar_conteudos",
     "acessar_modulo_profissional",
@@ -40,15 +40,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Administrador",
-  nutricionista_chefe: "Nutricionista Chefe",
-  nutricionista: "Nutricionista",
+  nutritionist_chefe: "Nutricionista Chefe",
+  nutritionist: "Nutricionista",
   paciente: "Paciente",
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
   admin: "bg-red-100 text-red-700",
-  nutricionista_chefe: "bg-purple-100 text-purple-700",
-  nutricionista: "bg-blue-100 text-blue-700",
+  nutritionist_chefe: "bg-purple-100 text-purple-700",
+  nutritionist: "bg-blue-100 text-blue-700",
   paciente: "bg-green-100 text-green-700",
 };
 

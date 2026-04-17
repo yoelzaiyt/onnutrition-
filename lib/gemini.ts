@@ -24,7 +24,7 @@ const getClient = (): any => {
 };
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
-async function generateContent(prompt: string, jsonMode: boolean = true): Promise<any> {
+async function generateContent(prompt: string): Promise<any> {
   const client = getClient();
   if (!client) {
     throw new Error('Gemini API key not configured');
@@ -34,8 +34,6 @@ async function generateContent(prompt: string, jsonMode: boolean = true): Promis
     const result = await client.generateContent(prompt);
     const text = result.response.text();
     
-    if (!jsonMode) return text;
-
     const match = text.match(/\{[\s\S]*\}/);
     return JSON.parse(match ? match[0] : '{}');
   } catch (err) {
@@ -45,48 +43,6 @@ async function generateContent(prompt: string, jsonMode: boolean = true): Promis
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
-
-/**
- * Resume um artigo científico em dois níveis (Simplificado e Técnico).
- */
-export async function summarizeArticle(title: string, context: string = '') {
-  const prompt = `Você é um robô de inteligência científica. 
-Resuma o artigo acadêmico intitulado: "${title}".
-Contexto adicional: ${context}
-
-Retorne APENAS um JSON no formato:
-{
-  "simplificado": "Resumo em linguagem simples para leigos (1-2 frases)",
-  "tecnico": "Resumo técnico detalhado com foco em mecanismos fisiológicos/bioquímicos (2-4 frases)",
-  "nivel_evidencia": "alto" | "medio" | "baixo",
-  "aplicacao_clinica": "Sugestão prática para o nutricionista"
-}`;
-  return generateContent(prompt, true);
-}
-
-/**
- * Resposta do IA Co-Piloto para suporte técnico profissional.
- */
-export async function getAICopilotResponse(message: string, history: { role: string, content: string }[] = []) {
-  const historyText = history.map(h => `${h.role}: ${h.content}`).join('\n');
-  const prompt = `Você é o ON AI Co-Piloto, um assistente técnico de elite para nutricionistas.
-Seu objetivo é fornecer embasamento científico, explicar mecanismos fisiológicos e sugerir condutas educacionais.
-
-REGRAS CRÍTICAS:
-1. NUNCA gere prescrições clínicas (dietas, dosagens de manipulados específicas para um paciente).
-2. NUNCA dê diagnósticos médicos.
-3. Se o usuário pedir uma dieta, explique que seu papel é técnico-educacional e sugira princípios teóricos em vez de um cardápio.
-4. Use linguagem profissional e científica de alto nível.
-
-Histórico:
-${historyText}
-
-Usuário: ${message}
-
-Responda em Português (Brasil).`;
-
-  return generateContent(prompt, false);
-}
 
 /**
  * Gera um plano alimentar personalizado via Gemini.

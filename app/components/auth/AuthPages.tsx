@@ -320,11 +320,7 @@ export const RegisterPage: React.FC<AuthProps> = ({
           console.error("Error updating profile:", profileError);
         }
 
-        // Sucesso visual premium
-        setError(null);
-        setTimeout(() => {
-          onLogin(finalRole);
-        }, 1500);
+        onLogin(finalRole);
       }
     } catch (err: any) {
       console.error("Registration error:", err);
@@ -471,24 +467,21 @@ export const RegisterPage: React.FC<AuthProps> = ({
             <button
               disabled={!selectedType || isLoading}
               onClick={step === 1 ? () => setStep(2) : handleRegister}
-              className={`flex-[2] py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl ${
+              className={`flex-[2] py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all shadow-xl ${
                 selectedType
                   ? "bg-[#22B391] text-white hover:bg-[#1C9A7D] shadow-[#22B391]/20"
                   : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
               } disabled:opacity-50`}
             >
               {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span className="text-sm">Configurando seu consultório digital...</span>
-                </div>
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   {step === 1
                     ? "Continuar"
                     : !hasConfig
                       ? "Criar Conta Admin -🚀"
-                      : "Criar Conta Premium"}
+                      : "Criar Conta"}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

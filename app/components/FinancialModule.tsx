@@ -36,19 +36,14 @@ const FinancialModule: React.FC = () => {
   });
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await financeService.getAll('mock-nutri-id'); // Id mock provisório
-        setPayments(data);
-      } catch(e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const unsubscribe = financeService.subscribeToPayments((data) => {
+      setPayments(data);
+      setLoading(false);
+    });
 
-    loadData();
     fetchPatients();
+
+    return () => unsubscribe();
   }, []);
 
   const fetchPatients = async () => {
@@ -61,10 +56,9 @@ const FinancialModule: React.FC = () => {
     try {
       const selectedPatient = patients.find(p => p.id === formData.patientId);
       
-      await financeService.create({
-        nutri_id: 'mock-nutri-id',
-        patient_id: formData.patientId,
-        patient_name: selectedPatient?.name || 'Desconhecido',
+      await financeService.createPayment({
+        patientId: formData.patientId,
+        patientName: selectedPatient?.name || 'Desconhecido',
         amount: parseFloat(formData.amount),
         date: formData.date,
         status: formData.status,

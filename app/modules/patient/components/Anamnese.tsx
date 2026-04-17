@@ -6,7 +6,6 @@ import {
   addDocument,
   deleteDocument,
 } from "@/app/lib/firestore-utils";
-import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
 import {
   Plus,
   Trash2,
@@ -178,27 +177,10 @@ export default function Anamnese({
 }: {
   patientId?: string;
 }) {
-  const [viewMode, setViewMode] = useState<"wizard" | "tools">("wizard");
   const [activeSection, setActiveSection] = useState<SectionKey>("weight");
   const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
     new Set(["weight"]),
   );
-  const [wizardSaved, setWizardSaved] = useState(false);
-
-  const handleSaveWizard = async (data: any) => {
-    // Salvar o AnamnesisWizard inteiro no perfil do paciente
-    try {
-      await addDocument(`patients/${patientId}/anamnesis_wizard_data`, {
-        patientId,
-        date: new Date().toISOString(),
-        ...data,
-      });
-      setWizardSaved(true);
-      setTimeout(() => setWizardSaved(false), 3000); // feedback visual rápido
-    } catch (error) {
-      console.error("Erro ao salvar wizard:", error);
-    }
-  };
 
   const toggleSection = (section: SectionKey) => {
     const newExpanded = new Set(expandedSections);
@@ -212,117 +194,74 @@ export default function Anamnese({
 
   return (
     <div className="space-y-4">
-      {/* Botões de Módulo */}
-      <div className="flex bg-gray-100 p-1 rounded-xl">
-        <button
-          onClick={() => setViewMode("wizard")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            viewMode === "wizard"
-              ? "bg-white text-[#22B391] shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Assistente Inteligente (Wizard IA)
-        </button>
-        <button
-          onClick={() => setViewMode("tools")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            viewMode === "tools"
-              ? "bg-white text-[#22B391] shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Ferramentas Individuais (Consultas Pontuais)
-        </button>
+      <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
+        <h3 className="text-lg font-black text-white flex items-center gap-2">
+          📋 ANAMNESE COMPLETA - 9 FERRAMENTAS INTEGRADAS
+        </h3>
+        <p className="text-white/70 text-sm">
+          ⭐ Avaliação nutricional integrada - ATUALIZADO HOJE ⭐
+        </p>
       </div>
 
-      {wizardSaved && (
-        <div className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-500" />
-          <span className="text-sm font-medium">Anamnese Avançada salva com sucesso no perfil!</span>
-        </div>
-      )}
+      <div className="space-y-2">
+        {sections.map((section) => (
+          <div
+            key={section.id}
+            className="border border-gray-200 rounded-xl overflow-hidden"
+          >
+            <button
+              onClick={() => toggleSection(section.id)}
+              className={`w-full flex items-center justify-between p-4 transition-colors ${
+                activeSection === section.id
+                  ? "bg-[#22B391]/10 text-[#22B391]"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <section.icon className="w-5 h-5" />
+                <span className="font-medium">{section.label}</span>
+              </div>
+              {expandedSections.has(section.id) ? (
+                <ChevronDown className="w-5 h-5" />
+              ) : (
+                <ChevronRight className="w-5 h-5" />
+              )}
+            </button>
 
-      {viewMode === "wizard" ? (
-        <div className="bg-white rounded-[32px] overflow-hidden border border-gray-200 p-4">
-          <AnamnesisWizard 
-            patientId={patientId} 
-            onSave={handleSaveWizard} 
-            onBack={() => setViewMode("tools")} 
-          />
-        </div>
-      ) : (
-        <>
-          <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
-            <h3 className="text-lg font-black text-white flex items-center gap-2">
-              📋 ANAMNESE BÁSICA E CONTROLE DIÁRIO
-            </h3>
-            <p className="text-white/70 text-sm">
-              ⭐ Preenchimento focado com histórico de evolução pontual ⭐
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className="border border-gray-200 rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className={`w-full flex items-center justify-between p-4 transition-colors ${
-                    activeSection === section.id
-                      ? "bg-[#22B391]/10 text-[#22B391]"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <section.icon className="w-5 h-5" />
-                    <span className="font-medium">{section.label}</span>
-                  </div>
-                  {expandedSections.has(section.id) ? (
-                    <ChevronDown className="w-5 h-5" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5" />
-                  )}
-                </button>
-
-                {expandedSections.has(section.id) && (
-                  <div className="p-4 border-t border-gray-100 bg-gray-50">
-                    {section.id === "weight" && (
-                      <WeightSection patientId={patientId} />
-                    )}
-                    {section.id === "clinical" && (
-                      <ClinicalSection patientId={patientId} />
-                    )}
-                    {section.id === "medications" && (
-                      <MedicationsSection patientId={patientId} />
-                    )}
-                    {section.id === "eating" && (
-                      <EatingSection patientId={patientId} />
-                    )}
-                    {section.id === "behavior" && (
-                      <BehaviorSection patientId={patientId} />
-                    )}
-                    {section.id === "physical" && (
-                      <PhysicalSection patientId={patientId} />
-                    )}
-                    {section.id === "hydration" && (
-                      <HydrationSection patientId={patientId} />
-                    )}
-                    {section.id === "goals" && (
-                      <GoalsSection patientId={patientId} />
-                    )}
-                    {section.id === "visual" && (
-                      <VisualSection patientId={patientId} />
-                    )}
-                  </div>
+            {expandedSections.has(section.id) && (
+              <div className="p-4 border-t border-gray-100 bg-gray-50">
+                {section.id === "weight" && (
+                  <WeightSection patientId={patientId} />
+                )}
+                {section.id === "clinical" && (
+                  <ClinicalSection patientId={patientId} />
+                )}
+                {section.id === "medications" && (
+                  <MedicationsSection patientId={patientId} />
+                )}
+                {section.id === "eating" && (
+                  <EatingSection patientId={patientId} />
+                )}
+                {section.id === "behavior" && (
+                  <BehaviorSection patientId={patientId} />
+                )}
+                {section.id === "physical" && (
+                  <PhysicalSection patientId={patientId} />
+                )}
+                {section.id === "hydration" && (
+                  <HydrationSection patientId={patientId} />
+                )}
+                {section.id === "goals" && (
+                  <GoalsSection patientId={patientId} />
+                )}
+                {section.id === "visual" && (
+                  <VisualSection patientId={patientId} />
                 )}
               </div>
-            ))}
+            )}
           </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

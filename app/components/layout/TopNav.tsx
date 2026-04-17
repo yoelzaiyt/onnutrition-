@@ -54,9 +54,10 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { id: "data", label: "Dados", icon: FileSpreadsheet },
+  { id: "qr-generator", label: "QR Code", icon: QrCode },
   {
     id: "patient-profile",
-    label: "CURSOS",
+    label: "Cursos & Formação",
     icon: GraduationCap,
     children: [
       { id: "patient-profile", label: "Profissional (Nutricionista)" },

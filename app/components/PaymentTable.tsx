@@ -28,7 +28,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({ payments, onAddPayment }) =
   const [dateFilter, setDateFilter] = useState<'todos' | 'hoje' | 'semana' | 'mes'>('todos');
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = payment.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          payment.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'todos' || payment.status === statusFilter;
@@ -53,7 +53,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({ payments, onAddPayment }) =
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este pagamento?')) {
       try {
-        await financeService.delete(id);
+        await financeService.deletePayment(id);
       } catch (error) {
         console.error('Error deleting payment:', error);
       }
@@ -63,7 +63,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({ payments, onAddPayment }) =
   const toggleStatus = async (payment: Payment) => {
     try {
       const newStatus = payment.status === 'pago' ? 'pendente' : 'pago';
-      await financeService.update(payment.id!, { status: newStatus });
+      await financeService.updatePayment(payment.id!, { status: newStatus });
     } catch (error) {
       console.error('Error updating status:', error);
     }
@@ -150,7 +150,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({ payments, onAddPayment }) =
                 >
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-sm font-black text-[#0B2B24]">{payment.patient_name || 'Paciente não identificado'}</span>
+                      <span className="text-sm font-black text-[#0B2B24]">{payment.patientName || 'Paciente não identificado'}</span>
                       <span className="text-[10px] text-slate-400 font-bold">{payment.description || 'Sem descrição'}</span>
                     </div>
                   </td>
