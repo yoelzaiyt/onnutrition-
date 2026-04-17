@@ -172,10 +172,10 @@ const professionalModules: ModuleCard[] = [
   },
   {
     id: "cursos",
-    label: "CURSOS",
-    icon: BookOpen,
-    description: "Formação, Notícias e Biblioteca",
-    color: "blue",
+    label: "CIÊNCIA & NOBEL",
+    icon: Sparkles,
+    description: "Descobertas, FDA e Casos Dublados",
+    color: "amber",
   },
   {
     id: "pregnancy",
