@@ -172,47 +172,52 @@ export default function Anamnese({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden font-sans text-slate-200">
+    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden font-sans text-slate-200 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,179,145,0.05)_0%,transparent_50%)] pointer-events-none" />
       
-      {/* Header Premium */}
-      <div className="relative border-b border-white/5 bg-[#0f1520] p-6 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#22B391] rounded-full blur-[100px] opacity-10 mix-blend-screen pointer-events-none" />
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#22B391]/20 to-[#125c4a]/10 border border-[#22B391]/30 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(34,179,145,0.2)]">
-              <Sparkles className="w-6 h-6 text-[#45dcb9]" />
-            </div>
+      {/* Header Premium - "Console de Comando" */}
+      <div className="relative border-b border-white/5 bg-[#0f1520]/80 backdrop-blur-xl p-8 overflow-hidden z-20">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#22B391] rounded-full blur-[120px] opacity-10 mix-blend-screen pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-6">
+            <motion.div 
+              initial={{ rotate: -10, scale: 0.9 }}
+              animate={{ rotate: 0, scale: 1 }}
+              className="w-16 h-16 bg-gradient-to-br from-[#22B391] to-[#125c4a] rounded-[22px] flex items-center justify-center shadow-[0_10px_30px_rgba(34,179,145,0.3)] border border-white/20"
+            >
+              <Stethoscope className="w-8 h-8 text-white" />
+            </motion.div>
             <div>
-              <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-                ANAMNESE 
-                <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#22B391]/20 text-[#45dcb9] border border-[#22B391]/30">Supabase Core</span>
-              </h2>
-              <p className="text-xs text-slate-400 mt-1 font-medium">
-                Avaliação Clínica • Rastreamento de Hábitos • Cloud Sync Real
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-2xl font-black tracking-tighter text-white">ANAMNESE CLÍNICA</h2>
+                <span className="px-3 py-1 rounded-full text-[10px] uppercase font-black bg-[#22B391]/10 text-[#45dcb9] border border-[#22B391]/20">Pro Engine v3.0</span>
+              </div>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+                <Activity className="w-3.5 h-3.5 text-[#22B391]" /> Interface Sinérgica de Diagnóstico
               </p>
             </div>
           </div>
           
-          <div className="flex bg-[#0a0f16] p-1.5 rounded-2xl border border-white/10 shadow-inner">
+          <div className="flex bg-black/40 p-1.5 rounded-[20px] border border-white/5 shadow-2xl backdrop-blur-md">
             <button
               onClick={() => setViewMode("wizard")}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${
+              className={`flex items-center gap-2 px-6 py-3 text-[11px] font-black rounded-Xl transition-all uppercase tracking-widest ${
                 viewMode === "wizard"
-                  ? "bg-[#22B391] text-[#0a0f16] shadow-lg shadow-[#22B391]/20"
+                  ? "bg-[#22B391] text-[#0a0f16] shadow-xl shadow-[#22B391]/20"
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <Zap className="w-3.5 h-3.5" /> Wizard
+              <Zap className="w-4 h-4" /> Fluxo Guiado
             </button>
             <button
               onClick={() => setViewMode("tools")}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${
+              className={`flex items-center gap-2 px-6 py-3 text-[11px] font-black rounded-Xl transition-all uppercase tracking-widest ${
                 viewMode === "tools"
-                  ? "bg-[#22B391] text-[#0a0f16] shadow-lg shadow-[#22B391]/20"
+                  ? "bg-[#22B391] text-[#0a0f16] shadow-xl shadow-[#22B391]/20"
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <Activity className="w-3.5 h-3.5" /> Ferramentas
+              <Activity className="w-4 h-4" /> Painel Geral
             </button>
           </div>
         </div>
@@ -234,70 +239,113 @@ export default function Anamnese({
               onSave={handleSaveWizard} 
               onBack={() => setViewMode("tools")} 
             />
-          </div>
-        ) : (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="relative group bg-gradient-to-br from-[#0B2B24] to-[#111827] p-6 rounded-[24px] border border-white/5 overflow-hidden shadow-2xl">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-[#22B391] rounded-full blur-[60px] opacity-10" />
-               <div className="relative z-10 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                     <Shield className="w-5 h-5 text-[#45dcb9]" />
+         ) : (
+          <div className="space-y-12 max-w-6xl mx-auto py-4">
+            {/* Status Card Unificado */}
+            <motion.div 
+               initial={{ opacity: 0, y: 30 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="relative group bg-gradient-to-br from-[#111827] to-[#0a0f16] p-8 rounded-[40px] border border-white/5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            >
+               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-[#22B391] rounded-full blur-[100px] opacity-10 pointer-events-none" />
+               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[24px] bg-[#22B391]/10 flex items-center justify-center border border-[#22B391]/20">
+                       <Shield className="w-8 h-8 text-[#45dcb9]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white italic tracking-tight mb-1">Ecossistema ONN Sincronizado</h3>
+                      <p className="text-sm text-slate-400 font-medium">O paciente visualiza estas atualizações em tempo real no app móvel.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white italic tracking-tight">Sincronização Unificada (Mobile + Web)</h3>
-                    <p className="text-xs text-slate-400 font-medium">Os dados abaixo são sincronizados instantaneamente com o app do paciente.</p>
+                  <div className="flex gap-4">
+                    <div className="bg-white/5 px-6 py-4 rounded-3xl border border-white/5 text-center">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Última Att</p>
+                      <p className="text-sm font-black text-white">Hoje, 14:30</p>
+                    </div>
+                    <div className="bg-[#22B391]/10 px-6 py-4 rounded-3xl border border-[#22B391]/20 text-center">
+                      <p className="text-[10px] font-black text-[#22B391] uppercase tracking-widest mb-1">Status Sync</p>
+                      <p className="text-sm font-black text-[#45dcb9]">Online</p>
+                    </div>
                   </div>
                </div>
-            </div>
+            </motion.div>
 
-            <div className="space-y-3">
-              {sections.map((section) => (
-                <div
-                  key={section.id}
-                  className={`group border transition-all duration-300 rounded-[24px] overflow-hidden ${
-                    expandedSections.has(section.id)
-                      ? "bg-[#0f1520] border-[#22B391]/30 shadow-[0_0_20px_rgba(34,179,145,0.05)]"
-                      : "bg-[#0f1520]/50 border-white/5 hover:border-white/10 hover:bg-[#0f1520]"
-                  }`}
-                >
-                  <button
+            {/* Grid de Ferramentas Sinérgicas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence>
+                {sections.map((section, idx) => (
+                  <motion.div
+                    key={section.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    whileHover={{ y: -5 }}
                     onClick={() => toggleSection(section.id)}
-                    className="w-full flex items-center justify-between p-5 transition-colors"
+                    className={`relative p-8 rounded-[35px] cursor-pointer transition-all duration-500 group overflow-hidden border ${
+                      activeSection === section.id
+                        ? "bg-gradient-to-br from-[#0f1520] to-[#0a0f16] border-[#22B391]/50 shadow-[0_20px_40px_rgba(34,179,145,0.1)] col-span-1 md:col-span-2 lg:col-span-3"
+                        : "bg-[#0f1520] border-white/5 hover:border-white/20 hover:shadow-2xl"
+                    }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-[#22B391]/30 transition-all ${expandedSections.has(section.id) ? "shadow-[inset_0_0_10px_rgba(34,179,145,0.1)]" : ""}`}>
-                        <section.icon className={`w-5 h-5 ${section.color}`} />
+                    {/* Background Icon Watermark */}
+                    <section.icon className={`absolute -right-4 -bottom-4 w-32 h-32 opacity-[0.03] rotate-12 transition-all group-hover:opacity-[0.06] group-hover:scale-110 ${section.color}`} />
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-[#22B391]/30 transition-all ${activeSection === section.id ? "bg-[#22B391]/10 border-[#22B391]/30" : ""}`}>
+                          <section.icon className={`w-7 h-7 ${section.color}`} />
+                        </div>
+                        {activeSection === section.id ? (
+                           <button className="p-3 bg-rose-500/10 text-rose-400 rounded-xl hover:bg-rose-500/20 transition-all">
+                              <Trash2 className="w-4 h-4" />
+                           </button>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-slate-500 group-hover:bg-[#22B391] group-hover:text-black transition-all">
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
+                        )}
                       </div>
-                      <span className={`font-bold text-sm tracking-tight ${expandedSections.has(section.id) ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`}>
-                        {section.label}
-                      </span>
-                    </div>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${expandedSections.has(section.id) ? "bg-[#22B391] text-[#0a0f16]" : "bg-white/5 text-slate-500"}`}>
-                      {expandedSections.has(section.id) ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
+
+                      <div className="mb-2">
+                        <h4 className={`text-xl font-black tracking-tighter transition-colors ${activeSection === section.id ? "text-[#45dcb9]" : "text-white group-hover:text-[#45dcb9]"}`}>
+                          {section.label}
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">Gestão integrada de dados clínicos e biométricos.</p>
+                      </div>
+
+                      {activeSection === section.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="mt-10 pt-10 border-t border-white/5"
+                        >
+                          {section.id === "weight" && <WeightSection patientId={patientId} />}
+                          {section.id === "clinical" && <ClinicalSection patientId={patientId} />}
+                          {section.id === "medications" && <MedicationsSection patientId={patientId} />}
+                          {section.id === "eating" && <EatingSection patientId={patientId} />}
+                          {section.id === "behavior" && <BehaviorSection patientId={patientId} />}
+                          {section.id === "physical" && <PhysicalSection patientId={patientId} />}
+                          {section.id === "hydration" && <HydrationSection patientId={patientId} />}
+                          {section.id === "goals" && <GoalsSection patientId={patientId} />}
+                          {section.id === "visual" && <VisualSection patientId={patientId} />}
+                          
+                          <div className="mt-12 flex justify-end gap-4">
+                             <button onClick={() => setActiveSection(null)} className="px-6 py-3 text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-all">Fechar</button>
+                             <button className="flex items-center gap-2 px-8 py-3 bg-[#22B391] text-[#0a0f16] text-xs font-black rounded-xl uppercase tracking-widest hover:bg-[#1C9A7D] shadow-xl shadow-[#22B391]/20">
+                                <Save className="w-4 h-4" /> Salvar Alterações
+                             </button>
+                          </div>
+                        </motion.div>
                       )}
                     </div>
-                  </button>
-
-                  {expandedSections.has(section.id) && (
-                    <div className="p-6 border-t border-white/5 bg-[#0a0f16]/40 animate-in slide-in-from-top-2 duration-300">
-                      {section.id === "weight" && <WeightSection patientId={patientId} />}
-                      {section.id === "clinical" && <ClinicalSection patientId={patientId} />}
-                      {section.id === "medications" && <MedicationsSection patientId={patientId} />}
-                      {section.id === "eating" && <EatingSection patientId={patientId} />}
-                      {section.id === "behavior" && <BehaviorSection patientId={patientId} />}
-                      {section.id === "physical" && <PhysicalSection patientId={patientId} />}
-                      {section.id === "hydration" && <HydrationSection patientId={patientId} />}
-                      {section.id === "goals" && <GoalsSection patientId={patientId} />}
-                      {section.id === "visual" && <VisualSection patientId={patientId} />}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
+        )
+   </div>
         )}
       </main>
 

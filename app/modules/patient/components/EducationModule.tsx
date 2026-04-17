@@ -58,37 +58,49 @@ interface AIResponse {
 const sampleCourses: Course[] = [
   {
     id: "1",
-    title: "Nutrição Clínica e Doenças Crônicas",
-    modules: 5,
-    lessons: 20,
-    duration: "40h",
-    focus: "nutricao_clinica",
+    title: "Mecanismos de Autofagia e Longevidade (Prêmio Nobel 2016)",
+    modules: 6,
+    lessons: 24,
+    duration: "45h",
+    focus: "metabolismo",
     contents: ["video", "estudo_de_caso", "pdf"],
     features: ["certificacao", "trilhas_de_aprendizado"],
-    rating: 4.9,
-    progress: 35,
+    rating: 5.0,
+    progress: 15,
   },
   {
     id: "2",
-    title: "Metabolismo Celular e Termogênese",
-    modules: 4,
-    lessons: 16,
-    duration: "25h",
-    focus: "metabolismo",
-    contents: ["video", "quiz"],
-    features: ["certificacao", "progresso"],
-    rating: 4.8,
-    progress: 100,
+    title: "Atualização FDA: Nova Tabela Nutricional EUA 2024",
+    modules: 3,
+    lessons: 12,
+    duration: "15h",
+    focus: "nutricao_clinica",
+    contents: ["video", "pdf", "quiz"],
+    features: ["certificacao"],
+    rating: 4.9,
+    progress: 0,
   },
   {
     id: "3",
-    title: "Performance e Fisiculturismo",
+    title: "Combate à Desnutrição Infantil e Tratamentos Modernos",
     modules: 8,
     lessons: 32,
     duration: "60h",
-    focus: "esportiva",
-    contents: ["video", "pdf", "estudo_de_caso", "quiz"],
+    focus: "nutricao_clinica",
+    contents: ["video", "estudo_de_caso", "pdf"],
     features: ["certificacao", "monetizacao"],
+    rating: 4.8,
+    progress: 0,
+  },
+  {
+    id: "4",
+    title: "Nutrição em Doenças Autoimunes: Casos Reais",
+    modules: 10,
+    lessons: 40,
+    duration: "80h",
+    focus: "nutricao_clinica",
+    contents: ["video", "estudo_de_caso"],
+    features: ["certificacao", "trilhas_de_aprendizado"],
     rating: 4.9,
     progress: 0,
   },
@@ -233,16 +245,51 @@ export default function EducationModule() {
         {/* TAB 1: CURSOS PROFISSIONAIS */}
         {activeTab === "courses" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-center bg-[#0f1520] border border-white/5 px-4 py-2 rounded-xl">
-               <h3 className="text-sm font-bold text-slate-300">Formação Profissional e Trilhas Clínicas</h3>
+            <div className="flex justify-between items-center bg-[#0f1520] border border-white/5 px-4 py-2 rounded-xl mb-8">
+               <h3 className="text-sm font-bold text-slate-300">Hub de Conhecimento Científico ONN</h3>
                <div className="relative w-64">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                  <input
                    type="text"
-                   placeholder="Buscar curso ou trilha..."
+                   placeholder="Buscar artigos ou cursos..."
                    className="w-full pl-9 pr-4 py-2 bg-[#0a0f16] border border-white/10 rounded-lg text-sm text-white focus:ring-1 focus:ring-[#45dcb9] focus:border-[#45dcb9]"
                  />
                </div>
+            </div>
+
+            {/* Featured Section: Discoveries */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="bg-gradient-to-br from-indigo-900/40 to-[#0a0f16] border border-indigo-500/20 rounded-3xl p-6 relative overflow-hidden group"
+              >
+                <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all" />
+                <Award className="w-10 h-10 text-indigo-400 mb-4" />
+                <h4 className="text-lg font-black text-white mb-2">Prêmio Nobel 2016: Autofagia</h4>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                  O Dr. Yoshinori Ohsumi revolucionou a nutrição ao desvendar como as células reciclam seus próprios componentes. 
+                  Entenda como o jejum e estratégias nutricionais ativam esse mecanismo de longevidade.
+                </p>
+                <button className="text-[10px] font-black text-indigo-300 uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
+                  Ver Pesquisa Completa <ChevronRight className="w-3 h-3" />
+                </button>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="bg-gradient-to-br from-emerald-900/40 to-[#0a0f16] border border-emerald-500/20 rounded-3xl p-6 relative overflow-hidden group"
+              >
+                <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all" />
+                <TrendingUp className="w-10 h-10 text-emerald-400 mb-4" />
+                <h4 className="text-lg font-black text-white mb-2">Novas Tabelas FDA (EUA)</h4>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                  As novas regulamentações exigem destaque para açúcares adicionados e porções reais. 
+                  Impacto direto na prescrição clínica e educação do paciente.
+                </p>
+                <button className="text-[10px] font-black text-emerald-300 uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
+                  Acessar Guia Técnico <ChevronRight className="w-3 h-3" />
+                </button>
+              </motion.div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
