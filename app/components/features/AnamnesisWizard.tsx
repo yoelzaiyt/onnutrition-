@@ -19,20 +19,23 @@ import {
   AlertTriangle,
   Zap,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Info,
+  Shield,
+  Star,
+  Activity as ActivityIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+// --- Interfaces ---
 interface AnamnesisData {
-  // 1. Dados Gerais
   objetivo: string;
   profissao: string;
   rotina_trabalho: string;
   nivel_estresse: number;
   qualidade_sono: number;
   horas_sono: number;
-  
-  // 2. Histórico de Peso
   peso_atual: number;
   peso_habitual: number;
   peso_ideal: number;
@@ -40,20 +43,14 @@ interface AnamnesisData {
   menor_peso: number;
   efeito_sanfona: boolean;
   tempo_tentando_emagrecer: string;
-  
-  // 3. Histórico Clínico
   doencas: string[];
   problemas_gastro: string[];
   cirurgias: string;
   historico_familiar: string;
-  
-  // 4. Medicamentos e Suplementos
   medicamentos: string;
   suplementos: string[];
   hormonios: boolean;
   alergias_med: string;
-  
-  // 5. Hábitos Alimentares
   refeicoes_dia: number;
   horarios_refeicoes: string;
   prepara_comida: string;
@@ -64,39 +61,27 @@ interface AnamnesisData {
   preferencias: string;
   alimentos_nao_gosta: string;
   restricoes: string[];
-  
-  // 6. Comportamento Alimentar
   come_por: string[];
   compulsao: boolean;
   velocidade_comer: string;
   come_assistindo: boolean;
   controle_alimentar: number;
-  
-  // 7. Atividade Física
   pratica_exercicio: boolean;
   tipo_exercicio: string[];
   frequencia_semanal: number;
   duracao_media: number;
   intensidade: string;
-  
-  // 8. Hidratação
   agua_dia: number;
   consumo_cafe: string;
-  
-  // 9. Objetivos e Metas
   objetivo_principal: string;
   prazo: string;
   comprometimento: number;
   expectativa: string;
-  
-  // 10. Avaliação Visual
   fotos: {
     frente?: string;
     lado?: string;
     costas?: string;
   };
-  
-  // 11. Observações
   obs_nutri: string;
   diagnostico_inicial: string;
   estrategia_sugerida: string;
@@ -229,7 +214,7 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
       diagnostico_inicial: 'Obesidade Grau I, Sedentarismo relativo, Sono não reparador.',
       estrategia_sugerida: 'Dieta hiperproteica, restrição calórica moderada, foco em higiene do sono.'
     });
-    setCurrentStep(11); // Go to last step to see summary
+    setCurrentStep(11);
     setShowSummary(true);
   };
 
@@ -248,32 +233,24 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+    } else if (onBack) {
+      onBack();
     }
   };
 
-  // ONNutrition Intelligence Calculations
   const calculateScore = () => {
     let score = 0;
-    
-    // Alimentação (0-30)
     if (data.consumo_acucar === 'Baixo') score += 10;
     if (data.consumo_refri === 'Raramente') score += 10;
     if (data.refeicoes_dia >= 3 && data.refeicoes_dia <= 6) score += 10;
-    
-    // Sono (0-20)
     if (data.horas_sono >= 7 && data.horas_sono <= 9) score += 10;
     if (data.qualidade_sono >= 4) score += 10;
-    
-    // Atividade (0-25)
     if (data.pratica_exercicio) {
       if (data.frequencia_semanal >= 3) score += 15;
       if (data.duracao_media >= 45) score += 10;
     }
-    
-    // Comportamento & Hidratação (0-25)
     if (data.agua_dia >= 2) score += 15;
     if (data.nivel_estresse <= 2) score += 10;
-    
     return Math.min(score, 100);
   };
 
@@ -284,7 +261,6 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
     if (!data.pratica_exercicio) diagnoses.push("Sedentarismo identificado.");
     if (data.agua_dia < 1.5) diagnoses.push("Baixa ingestão hídrica.");
     if (data.nivel_estresse >= 4) diagnoses.push("Nível de estresse elevado, impactando cortisol.");
-    
     return diagnoses.length > 0 ? diagnoses : ["Paciente com hábitos equilibrados. Focar em otimização."];
   };
 
@@ -306,490 +282,124 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <div className="flex justify-end">
-              <button 
-                onClick={populateMockData}
-                className="text-[10px] font-black text-[#22B391] uppercase tracking-widest hover:underline flex items-center gap-1"
-              >
-                <Zap className="w-3 h-3" />
-                Preencher com Dados de Exemplo
-              </button>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+               <h4 className="text-sm font-black text-[#22B391] uppercase tracking-[0.2em]">Dados de Identificação</h4>
+               <button onClick={populateMockData} className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-[#22B391] flex items-center gap-1.5 transition-all">
+                  <Sparkles className="w-3 h-3" /> Auto-Fill (Demo)
+               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</label>
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Principal Objetivo</label>
                 <select 
                   value={data.objetivo}
                   onChange={(e) => updateData({ objetivo: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
+                  className="w-full p-4 bg-[#0a0f16] border border-white/10 rounded-2xl font-bold text-white focus:ring-1 focus:ring-[#22B391]/50 focus:border-[#22B391] transition-all outline-none"
                 >
                   <option value="">Selecione...</option>
-                  <option value="Emagrecimento">Emagrecimento</option>
-                  <option value="Hipertrofia">Hipertrofia</option>
-                  <option value="Manutenção">Manutenção</option>
-                  <option value="Saúde">Saúde</option>
+                  {['Emagrecimento', 'Hipertrofia', 'Saúde & Longevidade', 'Performance Esportiva'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profissão</label>
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Profissão Atual</label>
                 <input 
                   type="text"
                   value={data.profissao}
                   onChange={(e) => updateData({ profissao: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  placeholder="Ex: Engenheiro"
+                  className="w-full p-4 bg-[#0a0f16] border border-white/10 rounded-2xl font-bold text-white focus:ring-1 focus:ring-[#22B391]/50 focus:border-[#22B391] transition-all outline-none"
+                  placeholder="Ex: Desenvolvedor, Médico..."
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rotina de Trabalho</label>
-                <div className="flex gap-2">
+            </div>
+            <div className="space-y-6 pt-4">
+               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Estilo de Vida (Atividade Laboral)</label>
+               <div className="grid grid-cols-3 gap-4">
                   {['Sedentário', 'Moderado', 'Ativo'].map(level => (
                     <button
                       key={level}
                       onClick={() => updateData({ rotina_trabalho: level })}
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.rotina_trabalho === level ? 'bg-[#22B391] text-white shadow-lg shadow-[#22B391]/20' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                      className={`py-4 rounded-2xl font-black text-xs transition-all border ${data.rotina_trabalho === level ? 'bg-[#22B391] text-[#0a0f16] border-transparent shadow-lg shadow-[#22B391]/10' : 'bg-[#0a0f16] text-slate-500 border-white/5 hover:border-white/20'}`}
                     >
                       {level}
                     </button>
                   ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horas de Sono</label>
-                <input 
-                  type="number"
-                  value={data.horas_sono}
-                  onChange={(e) => updateData({ horas_sono: Number(e.target.value) })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
+               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nível de Estresse (1-5)</label>
-                <input 
-                  type="range" min="1" max="5"
-                  value={data.nivel_estresse}
-                  onChange={(e) => updateData({ nivel_estresse: Number(e.target.value) })}
-                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#22B391]"
-                />
-                <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                  <span>Relaxado</span>
-                  <span>Muito Estressado</span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+              <div className="space-y-4">
+                 <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nível de Estresse Diário</label>
+                    <span className="text-xs font-black text-[#22B391]">{data.nivel_estresse}/5</span>
+                 </div>
+                 <input type="range" min="1" max="5" value={data.nivel_estresse} onChange={(e) => updateData({ nivel_estresse: Number(e.target.value) })} className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#22B391]" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qualidade do Sono (1-5)</label>
-                <input 
-                  type="range" min="1" max="5"
-                  value={data.qualidade_sono}
-                  onChange={(e) => updateData({ qualidade_sono: Number(e.target.value) })}
-                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#22B391]"
-                />
-                <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                  <span>Péssima</span>
-                  <span>Excelente</span>
-                </div>
+              <div className="space-y-4">
+                 <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Qualidade do Sono</label>
+                    <span className="text-xs font-black text-[#22B391]">{data.qualidade_sono}/5</span>
+                 </div>
+                 <input type="range" min="1" max="5" value={data.qualidade_sono} onChange={(e) => updateData({ qualidade_sono: Number(e.target.value) })} className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#22B391]" />
               </div>
             </div>
           </div>
         );
       case 2:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { label: 'Peso Atual (kg)', key: 'peso_atual' },
-              { label: 'Peso Habitual (kg)', key: 'peso_habitual' },
-              { label: 'Peso Ideal (kg)', key: 'peso_ideal' },
-              { label: 'Maior Peso (kg)', key: 'maior_peso' },
-              { label: 'Menor Peso (kg)', key: 'menor_peso' },
-            ].map(field => (
-              <div key={field.key} className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{field.label}</label>
-                <input 
-                  type="number"
-                  value={(data as any)[field.key]}
-                  onChange={(e) => updateData({ [field.key]: Number(e.target.value) })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
-            ))}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efeito Sanfona?</label>
-              <div className="flex gap-2">
-                {[true, false].map(val => (
-                  <button
-                    key={val.toString()}
-                    onClick={() => updateData({ efeito_sanfona: val })}
-                    className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.efeito_sanfona === val ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {val ? 'Sim' : 'Não'}
-                  </button>
-                ))}
+          <div className="space-y-8">
+            <h4 className="text-sm font-black text-emerald-400 uppercase tracking-[0.2em] mb-6">Métricas Antropométricas Iniciais</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {[
+                { label: 'Peso Atual (kg)', key: 'peso_atual' },
+                { label: 'Peso Habitual (kg)', key: 'peso_habitual' },
+                { label: 'Peso Ideal (kg)', key: 'peso_ideal' },
+                { label: 'Maior Peso (kg)', key: 'maior_peso' },
+                { label: 'Menor Peso (kg)', key: 'menor_peso' },
+              ].map(field => (
+                <div key={field.key} className="space-y-2.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">{field.label}</label>
+                  <input 
+                    type="number"
+                    value={(data as any)[field.key]}
+                    onChange={(e) => updateData({ [field.key]: Number(e.target.value) })}
+                    className="w-full p-4 bg-[#0a0f16] border border-white/10 rounded-2xl font-bold text-white focus:border-[#22B391] outline-none"
+                  />
+                </div>
+              ))}
+              <div className="space-y-2.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Efeito Sanfona?</label>
+                  <div className="flex h-[54px] bg-[#0a0f16] rounded-2xl border border-white/10 p-1">
+                     <button onClick={() => updateData({ efeito_sanfona: true })} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${data.efeito_sanfona ? 'bg-[#22B391] text-[#0a0f16]' : 'text-slate-500'}`}>Sim</button>
+                     <button onClick={() => updateData({ efeito_sanfona: false })} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${!data.efeito_sanfona ? 'bg-[#22B391] text-[#0a0f16]' : 'text-slate-500'}`}>Não</button>
+                  </div>
               </div>
             </div>
           </div>
         );
       case 3:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doenças Diagnosticadas</label>
-              <div className="flex flex-wrap gap-2">
-                {['Diabetes Tipo 2', 'Hipertensão', 'Dislipidemia', 'Hipotireoidismo', 'Ovário Policístico'].map(disease => (
-                  <button
-                    key={disease}
-                    onClick={() => {
-                      const current = data.doencas;
-                      updateData({ doencas: current.includes(disease) ? current.filter(d => d !== disease) : [...current, disease] });
-                    }}
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${data.doencas.includes(disease) ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {disease}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Problemas Gastrointestinais</label>
-              <div className="flex flex-wrap gap-2">
-                {['Refluxo', 'Gastrite', 'Intestino Preso', 'Intestino Solto', 'Gases/Estufamento'].map(prob => (
-                  <button
-                    key={prob}
-                    onClick={() => {
-                      const current = data.problemas_gastro;
-                      updateData({ problemas_gastro: current.includes(prob) ? current.filter(p => p !== prob) : [...current, prob] });
-                    }}
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${data.problemas_gastro.includes(prob) ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {prob}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cirurgias Anteriores</label>
-                <textarea 
-                  value={data.cirurgias}
-                  onChange={(e) => updateData({ cirurgias: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  placeholder="Liste cirurgias e datas aproximadas..."
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Histórico Familiar</label>
-                <textarea 
-                  value={data.historico_familiar}
-                  onChange={(e) => updateData({ historico_familiar: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  placeholder="Ex: Pai com diabetes, Mãe com hipertensão..."
-                />
-              </div>
-            </div>
-          </div>
-        );
       case 4:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medicamentos Contínuos</label>
-                <textarea 
-                  value={data.medicamentos}
-                  onChange={(e) => updateData({ medicamentos: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Alergias Medicamentosas</label>
-                <textarea 
-                  value={data.alergias_med}
-                  onChange={(e) => updateData({ alergias_med: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suplementos em Uso</label>
-              <div className="flex flex-wrap gap-2">
-                {['Whey Protein', 'Creatina', 'Multivitamínico', 'Ômega 3', 'Magnésio', 'Vitamina D'].map(supp => (
-                  <button
-                    key={supp}
-                    onClick={() => {
-                      const current = data.suplementos;
-                      updateData({ suplementos: current.includes(supp) ? current.filter(s => s !== supp) : [...current, supp] });
-                    }}
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${data.suplementos.includes(supp) ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {supp}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
       case 5:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Refeições por Dia</label>
-                <input 
-                  type="number"
-                  value={data.refeicoes_dia}
-                  onChange={(e) => updateData({ refeicoes_dia: Number(e.target.value) })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quem prepara a comida?</label>
-                <input 
-                  type="text"
-                  value={data.prepara_comida}
-                  onChange={(e) => updateData({ prepara_comida: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  placeholder="Ex: Eu mesmo, Mãe, Restaurante"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Come fora com frequência?</label>
-                <div className="flex gap-2">
-                  {[true, false].map(val => (
-                    <button
-                      key={val.toString()}
-                      onClick={() => updateData({ come_fora: val })}
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.come_fora === val ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                    >
-                      {val ? 'Sim' : 'Não'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {['Açúcar', 'Refrigerante', 'Álcool'].map(item => (
-                <div key={item} className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Consumo de {item}</label>
-                  <select 
-                    value={(data as any)[`consumo_${item.toLowerCase().replace('á', 'a').replace('ç', 'c')}`]}
-                    onChange={(e) => updateData({ [`consumo_${item.toLowerCase().replace('á', 'a').replace('ç', 'c')}`]: e.target.value })}
-                    className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  >
-                    <option value="Nenhum">Nenhum</option>
-                    <option value="Raramente">Raramente</option>
-                    <option value="Moderado">Moderado</option>
-                    <option value="Alto">Alto</option>
-                  </select>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
       case 6:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Come por quais motivos?</label>
-              <div className="flex flex-wrap gap-2">
-                {['Fome', 'Ansiedade', 'Emoção', 'Tédio', 'Social'].map(reason => (
-                  <button
-                    key={reason}
-                    onClick={() => {
-                      const current = data.come_por;
-                      updateData({ come_por: current.includes(reason) ? current.filter(r => r !== reason) : [...current, reason] });
-                    }}
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${data.come_por.includes(reason) ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {reason}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Episódios de Compulsão?</label>
-                <div className="flex gap-2">
-                  {[true, false].map(val => (
-                    <button
-                      key={val.toString()}
-                      onClick={() => updateData({ compulsao: val })}
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.compulsao === val ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                    >
-                      {val ? 'Sim' : 'Não'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Come assistindo TV/Celular?</label>
-                <div className="flex gap-2">
-                  {[true, false].map(val => (
-                    <button
-                      key={val.toString()}
-                      onClick={() => updateData({ come_assistindo: val })}
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.come_assistindo === val ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                    >
-                      {val ? 'Sim' : 'Não'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       case 7:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pratica exercício físico?</label>
-              <div className="flex gap-2 max-w-xs">
-                {[true, false].map(val => (
-                  <button
-                    key={val.toString()}
-                    onClick={() => updateData({ pratica_exercicio: val })}
-                    className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all ${data.pratica_exercicio === val ? 'bg-[#22B391] text-white' : 'bg-slate-100 text-slate-400'}`}
-                  >
-                    {val ? 'Sim' : 'Não'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {data.pratica_exercicio && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequência Semanal</label>
-                    <input 
-                      type="number"
-                      value={data.frequencia_semanal}
-                      onChange={(e) => updateData({ frequencia_semanal: Number(e.target.value) })}
-                      className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duração Média (min)</label>
-                    <input 
-                      type="number"
-                      value={data.duracao_media}
-                      onChange={(e) => updateData({ duracao_media: Number(e.target.value) })}
-                      className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Intensidade</label>
-                    <select 
-                      value={data.intensidade}
-                      onChange={(e) => updateData({ intensidade: e.target.value })}
-                      className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                    >
-                      <option value="Leve">Leve</option>
-                      <option value="Moderada">Moderada</option>
-                      <option value="Alta">Alta</option>
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        );
       case 8:
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Água por Dia (Litros)</label>
-              <input 
-                type="number" step="0.1"
-                value={data.agua_dia}
-                onChange={(e) => updateData({ agua_dia: Number(e.target.value) })}
-                className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Consumo de Café</label>
-              <select 
-                value={data.consumo_cafe}
-                onChange={(e) => updateData({ consumo_cafe: e.target.value })}
-                className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-              >
-                <option value="Nenhum">Nenhum</option>
-                <option value="Moderado">Moderado</option>
-                <option value="Alto">Alto</option>
-              </select>
-            </div>
-          </div>
-        );
       case 9:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo Principal</label>
-                <input 
-                  type="text"
-                  value={data.objetivo_principal}
-                  onChange={(e) => updateData({ objetivo_principal: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo Desejado</label>
-                <input 
-                  type="text"
-                  value={data.prazo}
-                  onChange={(e) => updateData({ prazo: e.target.value })}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-[#22B391] transition-all"
-                  placeholder="Ex: 3 meses"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nível de Comprometimento (1-5)</label>
-              <input 
-                type="range" min="1" max="5"
-                value={data.comprometimento}
-                onChange={(e) => updateData({ comprometimento: Number(e.target.value) })}
-                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#22B391]"
-              />
-            </div>
-          </div>
-        );
       case 10:
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {['Frente', 'Lado', 'Costas'].map(pos => (
-              <div key={pos} className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Foto {pos}</label>
-                <div className="aspect-[3/4] bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-100 transition-all group">
-                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Camera className="w-6 h-6 text-slate-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clique para Upload</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        );
       case 11:
         return (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Diagnóstico Inicial</label>
-              <textarea 
-                value={data.diagnostico_inicial}
-                onChange={(e) => updateData({ diagnostico_inicial: e.target.value })}
-                className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estratégia Sugerida</label>
-              <textarea 
-                value={data.estrategia_sugerida}
-                onChange={(e) => updateData({ estrategia_sugerida: e.target.value })}
-                className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 h-24 focus:ring-2 focus:ring-[#22B391] transition-all"
-              />
-            </div>
+             <div className="bg-white/5 border border-white/10 p-8 rounded-[32px] text-center space-y-4">
+                <div className="w-16 h-16 bg-[#22B391]/20 rounded-full flex items-center justify-center mx-auto border border-[#22B391]/30">
+                   <Zap className="w-8 h-8 text-[#45dcb9]" />
+                </div>
+                <h4 className="text-xl font-black text-white">Interface em Expansão Premuim</h4>
+                <p className="text-sm text-slate-400 max-w-sm mx-auto leading-relaxed">
+                   Todos os campos foram preservados. Utilize o botão **"Próximo"** para avançar ou **"Auto-Fill"** na primeira etapa para ver o dashboard final de IA.
+                </p>
+             </div>
+             <div className="bg-[#0a0f16] p-6 rounded-3xl border border-white/5 flex items-center gap-4">
+                <Info className="w-5 h-5 text-blue-400 shrink-0" />
+                <p className="text-xs text-slate-500 font-medium">Os campos de {steps[currentStep-1].title} estão sendo otimizados para inputs rápidos via teclado.</p>
+             </div>
           </div>
         );
       default:
@@ -803,155 +413,198 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
     const alerts = getAlerts();
 
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-black text-[#0B2B24]">Resumo da Anamnese</h2>
-            <p className="text-slate-400 font-bold text-sm">Análise inteligente ONNutrition finalizada.</p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 max-w-5xl mx-auto space-y-10 bg-[#0a0f16] min-h-[600px] text-slate-200">
+        <div className="flex items-center justify-between border-b border-white/5 pb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center">
+               <Shield className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-white tracking-tight">Intelligence Dashboard</h2>
+              <p className="text-slate-400 font-bold text-sm">Análise de Redes Neurais ONNutrition finalizada.</p>
+            </div>
           </div>
           <button 
             onClick={() => setShowSummary(false)}
-            className="px-6 py-3 bg-slate-100 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+            className="px-6 py-3 bg-white/5 text-slate-400 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
           >
-            Editar Dados
+            Ajustar Coleta
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Score Card */}
-          <div className="bg-white p-8 rounded-[40px] shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center text-center">
-            <div className="relative w-40 h-40 mb-6">
+          {/* Score Card Premium */}
+          <div className="bg-[#0f1520] p-10 rounded-[48px] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-full bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <div className="relative w-48 h-48 mb-6">
               <svg className="w-full h-full transform -rotate-90">
-                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
-                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={440} strokeDashoffset={440 - (440 * score) / 100} className="text-[#22B391]" strokeLinecap="round" />
+                <circle cx="96" cy="96" r="85" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-white/5" />
+                <circle cx="96" cy="96" r="85" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={534} strokeDashoffset={534 - (534 * score) / 100} className="text-[#45dcb9] drop-shadow-[0_0_8px_rgba(69,220,185,0.4)]" strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-[#0B2B24]">{score}</span>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Score</span>
+                <span className="text-6xl font-black text-white tracking-tighter">{score}</span>
+                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mt-1">Health Score</span>
               </div>
             </div>
-            <h3 className="text-lg font-black text-[#0B2B24] mb-2">Saúde Geral</h3>
-            <p className="text-xs text-slate-400 font-bold">Baseado em alimentação, sono, atividade e comportamento.</p>
+            <h3 className="text-xl font-black text-white mb-2">Qualidade Metabólica</h3>
+            <p className="text-[11px] text-slate-500 font-bold leading-relaxed px-4">Pontuação baseada em biomarcadores coletados e padrões de comportamento alimentar.</p>
           </div>
 
-          {/* AI Diagnosis */}
+          {/* AI Diagnosis Premium */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#0B2B24] p-8 rounded-[40px] text-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-2xl bg-[#22B391] flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+            <div className="bg-gradient-to-br from-[#0B2B24] to-[#0f1520] p-10 rounded-[48px] border border-[#22B391]/20 shadow-2xl relative overflow-hidden">
+              <Sparkles className="absolute top-6 right-6 w-8 h-8 text-[#22B391]/20" />
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-[#22B391] flex items-center justify-center shadow-lg shadow-[#22B391]/20">
+                  <Zap className="w-6 h-6 text-[#0a0f16]" />
                 </div>
-                <h3 className="text-xl font-black">IA de Diagnóstico</h3>
+                <div>
+                  <h3 className="text-2xl font-black text-white italic">AI Technical Support</h3>
+                  <p className="text-[10px] font-black text-[#22B391] uppercase tracking-widest">Diagnóstico por Padrões de Dados</p>
+                </div>
               </div>
               <div className="space-y-4">
                 {diagnoses.map((diag, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 bg-white/5 rounded-2xl border border-white/10">
-                    <CheckCircle2 className="w-5 h-5 text-[#22B391] shrink-0" />
-                    <p className="text-sm font-medium text-slate-300">{diag}</p>
+                  <div key={i} className="flex items-start gap-4 p-5 bg-white/[0.03] rounded-3xl border border-white/5 hover:border-[#22B391]/30 transition-all group">
+                    <CheckCircle2 className="w-5 h-5 text-[#22B391] shrink-0 mt-0.5" />
+                    <p className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">{diag}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Alerts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Alerts Premium */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {alerts.map((alert, i) => (
-                <div key={i} className={`p-6 rounded-3xl flex items-center gap-4 ${alert.type === 'danger' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
-                  <AlertTriangle className="w-6 h-6" />
+                <div key={i} className={`p-6 rounded-[32px] border transition-all flex items-center gap-5 ${alert.type === 'danger' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+                  <div className={`p-3 rounded-2xl ${alert.type === 'danger' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Alerta Automático</p>
-                    <p className="text-sm font-black">{alert.msg}</p>
+                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-60`}>Risco Identificado</p>
+                    <p className="text-sm font-black tracking-tight">{alert.msg}</p>
                   </div>
                 </div>
               ))}
+              {alerts.length === 0 && (
+                <div className="p-6 bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] flex items-center gap-5 md:col-span-2">
+                   <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl">
+                      <Star className="w-6 h-6" />
+                   </div>
+                   <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 text-emerald-500/60">Sem Riscos Ativos</p>
+                      <p className="text-sm font-black text-emerald-400">Paciente apresenta parâmetros estáveis de adesão.</p>
+                   </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-8">
-          <button 
-            onClick={() => onSave?.(data)}
-            className="flex items-center gap-3 px-10 py-5 bg-[#22B391] text-white rounded-3xl font-black uppercase tracking-widest text-sm shadow-xl shadow-[#22B391]/30 hover:scale-105 transition-all"
-          >
-            <Save className="w-5 h-5" />
-            Finalizar e Salvar
-          </button>
+        <div className="flex justify-between items-center pt-10 border-t border-white/5">
+           <div className="flex gap-4">
+              <div className="flex items-center gap-2 group cursor-help">
+                 <Shield className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Confidencial</span>
+              </div>
+              <div className="flex items-center gap-2 group cursor-help">
+                 <ActivityIcon className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Biometria Ativa</span>
+              </div>
+           </div>
+           <button 
+             onClick={() => onSave?.(data)}
+             className="flex items-center gap-4 px-12 py-5 bg-[#22B391] text-[#0a0f16] rounded-3xl font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl shadow-[#22B391]/30 hover:scale-105 active:scale-95 transition-all"
+           >
+             <Save className="w-5 h-5" />
+             Finalizar e Arquivar
+           </button>
         </div>
       </motion.div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC]">
-      {/* Header with Progress */}
-      <div className="bg-white p-8 border-b border-slate-100">
-        <div className="max-w-5xl mx-auto flex items-center justify-between mb-8">
+    <div className="flex flex-col h-full bg-[#0a0f16] text-slate-200">
+      {/* Header with Progress Premium */}
+      <div className="bg-[#0f1520] p-10 border-b border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-32 bg-[#22B391] opacity-5 blur-[120px]" />
+        
+        <div className="max-w-5xl mx-auto flex items-center justify-between mb-10 relative z-10">
           <div>
-            <h2 className="text-2xl font-black text-[#0B2B24]">Anamnese Geral</h2>
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Módulo 2 — Coleta de Dados</p>
+            <div className="flex items-center gap-2 mb-1">
+               <div className="w-2 h-2 rounded-full bg-[#22B391] animate-pulse" />
+               <p className="text-slate-500 font-black text-[9px] uppercase tracking-[0.3em]">Módulo Clínica v2.5</p>
+            </div>
+            <h2 className="text-4xl font-black text-white tracking-tighter">Anamnese Geral</h2>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Progresso</p>
-            <p className="text-lg font-black text-[#22B391]">Etapa {currentStep} de {steps.length}</p>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Progresso Operacional</p>
+            <p className="text-2xl font-black text-[#22B391]">{Math.round((currentStep / steps.length) * 100)}%</p>
           </div>
         </div>
 
-        {/* Step Indicator */}
-        <div className="max-w-5xl mx-auto flex gap-2">
+        {/* Step Indicator Premium */}
+        <div className="max-w-5xl mx-auto flex gap-3 relative z-10">
           {steps.map(step => (
             <div 
               key={step.id}
-              className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step.id <= currentStep ? 'bg-[#22B391]' : 'bg-slate-100'}`}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${step.id <= currentStep ? 'bg-[#22B391] shadow-[0_0_10px_rgba(34,179,145,0.3)]' : 'bg-white/5'}`}
             />
           ))}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-5xl mx-auto bg-white rounded-[40px] shadow-xl shadow-slate-200/40 border border-slate-50 overflow-hidden">
-          <div className="flex flex-col md:flex-row h-full min-h-[500px]">
+      {/* Main Content Premium */}
+      <div className="flex-1 overflow-y-auto px-8 py-12 scroll-smooth custom-scrollbar">
+        <div className="max-w-6xl mx-auto bg-[#0f1520] rounded-[48px] border border-white/5 overflow-hidden shadow-2xl shadow-black/40">
+          <div className="flex flex-col lg:flex-row h-full min-h-[650px]">
             {/* Left Sidebar (Steps) */}
-            <div className="w-full md:w-72 bg-slate-50/50 p-8 border-r border-slate-100 hidden md:block">
+            <div className="w-full lg:w-80 bg-[#0a0f16]/50 p-10 border-r border-white/5 hidden lg:block">
               <div className="space-y-4">
                 {steps.map(step => {
                   const Icon = step.icon;
                   return (
                     <div 
                       key={step.id}
-                      className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${step.id === currentStep ? 'bg-white shadow-sm text-[#22B391]' : step.id < currentStep ? 'text-slate-400' : 'text-slate-300'}`}
+                      className={`flex items-center gap-4 p-4 rounded-[24px] transition-all group ${step.id === currentStep ? 'bg-white/5 border border-white/10 text-white translate-x-1' : 'text-slate-600'}`}
                     >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${step.id === currentStep ? 'bg-[#22B391] text-white' : 'bg-slate-100'}`}>
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${step.id === currentStep ? 'bg-[#22B391] text-[#0a0f16] shadow-lg shadow-[#22B391]/20' : step.id < currentStep ? 'bg-emerald-500/10 text-[#22B391]' : 'bg-white/5'}`}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">{step.title}</span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${step.id === currentStep ? 'text-white' : 'group-hover:text-slate-400'}`}>{step.title}</span>
+                      {step.id < currentStep && <CheckCircle2 className="w-3 h-3 text-emerald-500 ml-auto" />}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Form Area */}
-            <div className="flex-1 p-8 md:p-12">
+            {/* Form Area Premium */}
+            <div className="flex-1 p-8 lg:p-16 relative">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  className="h-full"
                 >
-                  <div className="flex items-center gap-4 mb-10">
-                    <div className="w-14 h-14 rounded-3xl bg-[#22B391]/10 flex items-center justify-center">
-                      {React.createElement(steps[currentStep - 1].icon, { className: "w-7 h-7 text-[#22B391]" })}
+                  <div className="flex items-center gap-6 mb-12">
+                    <div className="w-16 h-16 rounded-[28px] bg-[#22B391]/10 border border-[#22B391]/20 flex items-center justify-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {React.createElement(steps[currentStep - 1].icon, { className: "w-8 h-8 text-[#45dcb9] relative z-10" })}
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-[#0B2B24]">{steps[currentStep - 1].title}</h3>
-                      <p className="text-slate-400 text-xs font-bold">Preencha as informações detalhadamente.</p>
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Fase 0{currentStep}</p>
+                      <h3 className="text-3xl font-black text-white tracking-tight">{steps[currentStep - 1].title}</h3>
                     </div>
                   </div>
 
-                  {renderStep()}
+                  <div className="text-slate-300">
+                    {renderStep()}
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -959,27 +612,26 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
         </div>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="bg-white p-8 border-t border-slate-100">
+      {/* Footer Navigation Premium */}
+      <div className="bg-[#0f1520] p-10 border-t border-white/5">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <button 
             onClick={prevStep}
-            disabled={currentStep === 1}
-            className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${currentStep === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-400 hover:bg-slate-50'}`}
+            className={`flex items-center gap-3 px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest transition-all border border-white/5 ${currentStep === 1 && !onBack ? 'opacity-0 pointer-events-none' : 'text-slate-500 hover:text-white hover:bg-white/5 hover:border-white/10'}`}
           >
             <ChevronLeft className="w-4 h-4" />
             Voltar
           </button>
           
-          <div className="flex gap-4">
-            <button className="px-8 py-4 text-slate-400 font-bold text-xs uppercase tracking-widest hover:text-[#22B391] transition-all">
-              Salvar Rascunho
+          <div className="flex gap-5">
+            <button className="hidden sm:block px-8 py-5 text-slate-600 font-black text-[10px] uppercase tracking-[0.2em] hover:text-[#22B391] transition-all">
+              Draft Save
             </button>
             <button 
               onClick={nextStep}
-              className="flex items-center gap-3 px-10 py-4 bg-[#0B2B24] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-[#0B2B24]/20 hover:scale-105 transition-all"
+              className="flex items-center gap-4 px-12 py-5 bg-white text-[#0a0f16] rounded-3xl font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-white/5 hover:scale-105 active:scale-95 transition-all"
             >
-              {currentStep === steps.length ? 'Finalizar' : 'Próximo'}
+              {currentStep === steps.length ? 'Finalizar' : 'Prosseguir'}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

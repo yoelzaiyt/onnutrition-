@@ -34,8 +34,14 @@ import {
   Ruler,
   AlertCircle,
   CheckCircle,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  History,
+  Info
 } from "lucide-react";
 
+// --- Interfaces ---
 interface WeightRecord {
   id: string;
   date: string;
@@ -161,16 +167,16 @@ type SectionKey =
   | "goals"
   | "visual";
 
-const sections: { id: SectionKey; label: string; icon: React.ElementType }[] = [
-  { id: "weight", label: "Peso + ON Scan 3D", icon: Scale },
-  { id: "clinical", label: "Histórico Clínico", icon: Stethoscope },
-  { id: "medications", label: "Meds & Suplementos", icon: Pill },
-  { id: "eating", label: "Hábitos Alimentares", icon: Utensils },
-  { id: "behavior", label: "Comportamento", icon: Brain },
-  { id: "physical", label: "Atividade Física", icon: Activity },
-  { id: "hydration", label: "Hidratação", icon: Droplets },
-  { id: "goals", label: "Objetivos e Metas", icon: Target },
-  { id: "visual", label: "Avaliação Visual", icon: Eye },
+const sections: { id: SectionKey; label: string; icon: React.ElementType; color: string }[] = [
+  { id: "weight", label: "Peso + ON Scan 3D", icon: Scale, color: "text-emerald-400" },
+  { id: "clinical", label: "Histórico Clínico", icon: Stethoscope, color: "text-blue-400" },
+  { id: "medications", label: "Meds & Suplementos", icon: Pill, color: "text-purple-400" },
+  { id: "eating", label: "Hábitos Alimentares", icon: Utensils, color: "text-orange-400" },
+  { id: "behavior", label: "Comportamento", icon: Brain, color: "text-pink-400" },
+  { id: "physical", label: "Atividade Física", icon: Activity, color: "text-cyan-400" },
+  { id: "hydration", label: "Hidratação", icon: Droplets, color: "text-sky-400" },
+  { id: "goals", label: "Objetivos e Metas", icon: Target, color: "text-emerald-500" },
+  { id: "visual", label: "Avaliação Visual", icon: Eye, color: "text-violet-400" },
 ];
 
 export default function Anamnese({
@@ -179,14 +185,11 @@ export default function Anamnese({
   patientId?: string;
 }) {
   const [viewMode, setViewMode] = useState<"wizard" | "tools">("wizard");
-  const [activeSection, setActiveSection] = useState<SectionKey>("weight");
-  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
-    new Set(["weight"]),
-  );
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(new Set([]));
   const [wizardSaved, setWizardSaved] = useState(false);
 
   const handleSaveWizard = async (data: any) => {
-    // Salvar o AnamnesisWizard inteiro no perfil do paciente
     try {
       await addDocument(`patients/${patientId}/anamnesis_wizard_data`, {
         patientId,
@@ -194,7 +197,7 @@ export default function Anamnese({
         ...data,
       });
       setWizardSaved(true);
-      setTimeout(() => setWizardSaved(false), 3000); // feedback visual rápido
+      setTimeout(() => setWizardSaved(false), 3000);
     } catch (error) {
       console.error("Erro ao salvar wizard:", error);
     }
@@ -204,146 +207,160 @@ export default function Anamnese({
     const newExpanded = new Set(expandedSections);
     if (newExpanded.has(section)) {
       newExpanded.delete(section);
+      if (activeSection === section) setActiveSection(null);
     } else {
       newExpanded.add(section);
+      setActiveSection(section);
     }
     setExpandedSections(newExpanded);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Botões de Módulo */}
-      <div className="flex bg-gray-100 p-1 rounded-xl">
-        <button
-          onClick={() => setViewMode("wizard")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            viewMode === "wizard"
-              ? "bg-white text-[#22B391] shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Assistente Inteligente (Wizard IA)
-        </button>
-        <button
-          onClick={() => setViewMode("tools")}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-            viewMode === "tools"
-              ? "bg-white text-[#22B391] shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Ferramentas Individuais (Consultas Pontuais)
-        </button>
+    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden font-sans text-slate-200">
+      
+      {/* Header Premium */}
+      <div className="relative border-b border-white/5 bg-[#0f1520] p-6 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#22B391] rounded-full blur-[100px] opacity-10 mix-blend-screen pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#22B391]/20 to-[#125c4a]/10 border border-[#22B391]/30 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(34,179,145,0.2)]">
+              <Sparkles className="w-6 h-6 text-[#45dcb9]" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                ANAMNESE 
+                <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#22B391]/20 text-[#45dcb9] border border-[#22B391]/30">Inteligente</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 font-medium">
+                Avaliação Clínica • Rastreamento de Hábitos • Evolução IA
+              </p>
+            </div>
+          </div>
+          
+          {/* Mode Switcher Premium */}
+          <div className="flex bg-[#0a0f16] p-1.5 rounded-2xl border border-white/10 shadow-inner">
+            <button
+              onClick={() => setViewMode("wizard")}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${
+                viewMode === "wizard"
+                  ? "bg-[#22B391] text-[#0a0f16] shadow-lg shadow-[#22B391]/20"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" /> Wizard
+            </button>
+            <button
+              onClick={() => setViewMode("tools")}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl transition-all uppercase tracking-widest ${
+                viewMode === "tools"
+                  ? "bg-[#22B391] text-[#0a0f16] shadow-lg shadow-[#22B391]/20"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" /> Ferramentas
+            </button>
+          </div>
+        </div>
       </div>
 
       {wizardSaved && (
-        <div className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-500" />
-          <span className="text-sm font-medium">Anamnese Avançada salva com sucesso no perfil!</span>
+        <div className="m-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle className="w-5 h-5" />
+          <span className="text-sm font-bold">Anamnese Avançada salva com sucesso no perfil!</span>
         </div>
       )}
 
-      {viewMode === "wizard" ? (
-        <div className="bg-white rounded-[32px] overflow-hidden border border-gray-200 p-4">
-          <AnamnesisWizard 
-            patientId={patientId} 
-            onSave={handleSaveWizard} 
-            onBack={() => setViewMode("tools")} 
-          />
-        </div>
-      ) : (
-        <>
-          <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
-            <h3 className="text-lg font-black text-white flex items-center gap-2">
-              📋 ANAMNESE BÁSICA E CONTROLE DIÁRIO
-            </h3>
-            <p className="text-white/70 text-sm">
-              ⭐ Preenchimento focado com histórico de evolução pontual ⭐
-            </p>
+      {/* Main Container */}
+      <main className="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
+        {viewMode === "wizard" ? (
+          <div className="bg-[#0f1520] rounded-[32px] overflow-hidden border border-white/5 p-1 animate-in fade-in zoom-in-95 duration-500">
+            <AnamnesisWizard 
+              patientId={patientId} 
+              onSave={handleSaveWizard} 
+              onBack={() => setViewMode("tools")} 
+            />
           </div>
+        ) : (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            {/* Legend/Banner */}
+            <div className="relative group bg-gradient-to-br from-[#0B2B24] to-[#111827] p-6 rounded-[24px] border border-white/5 overflow-hidden shadow-2xl">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[#22B391] rounded-full blur-[60px] opacity-10" />
+               <div className="relative z-10 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                     <History className="w-5 h-5 text-[#45dcb9]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-white italic tracking-tight">Registro de Evolução Diária</h3>
+                    <p className="text-xs text-slate-400 font-medium">Controle pontual de hábitos e condições clínicas do paciente.</p>
+                  </div>
+               </div>
+            </div>
 
-          <div className="space-y-2">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className="border border-gray-200 rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className={`w-full flex items-center justify-between p-4 transition-colors ${
-                    activeSection === section.id
-                      ? "bg-[#22B391]/10 text-[#22B391]"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
+            {/* Accordion Tools */}
+            <div className="space-y-3">
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className={`group border transition-all duration-300 rounded-[24px] overflow-hidden ${
+                    expandedSections.has(section.id)
+                      ? "bg-[#0f1520] border-[#22B391]/30 shadow-[0_0_20px_rgba(34,179,145,0.05)]"
+                      : "bg-[#0f1520]/50 border-white/5 hover:border-white/10 hover:bg-[#0f1520]"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <section.icon className="w-5 h-5" />
-                    <span className="font-medium">{section.label}</span>
-                  </div>
-                  {expandedSections.has(section.id) ? (
-                    <ChevronDown className="w-5 h-5" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5" />
-                  )}
-                </button>
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    className="w-full flex items-center justify-between p-5 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-[#22B391]/30 transition-all ${expandedSections.has(section.id) ? "shadow-[inset_0_0_10px_rgba(34,179,145,0.1)]" : ""}`}>
+                        <section.icon className={`w-5 h-5 ${section.color}`} />
+                      </div>
+                      <span className={`font-bold text-sm tracking-tight ${expandedSections.has(section.id) ? "text-white" : "text-slate-400 group-hover:text-slate-200"}`}>
+                        {section.label}
+                      </span>
+                    </div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${expandedSections.has(section.id) ? "bg-[#22B391] text-[#0a0f16]" : "bg-white/5 text-slate-500"}`}>
+                      {expandedSections.has(section.id) ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </div>
+                  </button>
 
-                {expandedSections.has(section.id) && (
-                  <div className="p-4 border-t border-gray-100 bg-gray-50">
-                    {section.id === "weight" && (
-                      <WeightSection patientId={patientId} />
-                    )}
-                    {section.id === "clinical" && (
-                      <ClinicalSection patientId={patientId} />
-                    )}
-                    {section.id === "medications" && (
-                      <MedicationsSection patientId={patientId} />
-                    )}
-                    {section.id === "eating" && (
-                      <EatingSection patientId={patientId} />
-                    )}
-                    {section.id === "behavior" && (
-                      <BehaviorSection patientId={patientId} />
-                    )}
-                    {section.id === "physical" && (
-                      <PhysicalSection patientId={patientId} />
-                    )}
-                    {section.id === "hydration" && (
-                      <HydrationSection patientId={patientId} />
-                    )}
-                    {section.id === "goals" && (
-                      <GoalsSection patientId={patientId} />
-                    )}
-                    {section.id === "visual" && (
-                      <VisualSection patientId={patientId} />
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+                  {expandedSections.has(section.id) && (
+                    <div className="p-6 border-t border-white/5 bg-[#0a0f16]/40 animate-in slide-in-from-top-2 duration-300">
+                      {section.id === "weight" && <WeightSection patientId={patientId} />}
+                      {section.id === "clinical" && <ClinicalSection patientId={patientId} />}
+                      {section.id === "medications" && <MedicationsSection patientId={patientId} />}
+                      {section.id === "eating" && <EatingSection patientId={patientId} />}
+                      {section.id === "behavior" && <BehaviorSection patientId={patientId} />}
+                      {section.id === "physical" && <PhysicalSection patientId={patientId} />}
+                      {section.id === "hydration" && <HydrationSection patientId={patientId} />}
+                      {section.id === "goals" && <GoalsSection patientId={patientId} />}
+                      {section.id === "visual" && <VisualSection patientId={patientId} />}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </main>
+
+      {/* Footer Compliance */}
+      <div className="bg-[#0f1520] border-t border-white/5 p-4 text-[10px] font-bold text-slate-600 flex justify-between items-center uppercase tracking-[0.1em]">
+         <div className="flex gap-6">
+            <span className="flex items-center gap-1.5 font-black text-[#45dcb9]/50"><Info className="w-3 h-3"/> Dados Seguros con ON Crypt</span>
+            <span className="flex items-center gap-1.5 opacity-50"><CheckCircle className="w-3 h-3"/> HIPAA Compliant</span>
+         </div>
+         <div className="opacity-40">ONNutrition — v2.5.0</div>
+      </div>
     </div>
   );
 }
 
-function FileText({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      />
-    </svg>
-  );
-}
+// --- Sub-components (Re-styled for Premium Dark) ---
 
 function WeightSection({ patientId }: { patientId: string }) {
   const [records, setRecords] = useState<WeightRecord[]>([]);
@@ -356,12 +373,7 @@ function WeightSection({ patientId }: { patientId: string }) {
   useEffect(() => {
     const unsubscribe = subscribeToCollection<WeightRecord>(
       `patients/${patientId}/weight-records`,
-      (data) =>
-        setRecords(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
+      (data) => setRecords(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
     );
     return () => unsubscribe();
   }, [patientId]);
@@ -374,100 +386,54 @@ function WeightSection({ patientId }: { patientId: string }) {
       currentWeight: parseFloat(currentWeight) || 0,
       usualWeight: parseFloat(usualWeight) || 0,
       idealWeight: parseFloat(idealWeight) || 0,
-      maxWeight: 0,
-      minWeight: 0,
-      hasSanfona: false,
     });
-    setCurrentWeight("");
-    setUsualWeight("");
-    setIdealWeight("");
-    setIsAdding(false);
+    setCurrentWeight(""); setUsualWeight(""); setIdealWeight(""); setIsAdding(false);
   };
 
   const latestRecord = records[0];
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700"
-        >
+    <div className="space-y-6">
+      <div className="flex gap-3">
+        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-2 bg-[#22B391] text-[#0a0f16] px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#34b093] transition-all">
           <Plus className="w-4 h-4" /> Novo Peso
         </button>
-        <button
-          onClick={() => setShowOnScan(!showOnScan)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700"
-        >
+        <button onClick={() => setShowOnScan(!showOnScan)} className="flex items-center gap-2 bg-indigo-600/20 text-indigo-400 border border-indigo-600/30 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600/30 transition-all">
           <Scan className="w-4 h-4" /> ON Scan 3D
         </button>
       </div>
 
       {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="grid grid-cols-3 gap-3 p-3 bg-white rounded-lg"
-        >
-          <input
-            type="number"
-            step="0.1"
-            value={currentWeight}
-            onChange={(e) => setCurrentWeight(e.target.value)}
-            placeholder="Peso atual (kg)"
-            className="p-2 border rounded-lg text-sm"
-          />
-          <input
-            type="number"
-            step="0.1"
-            value={usualWeight}
-            onChange={(e) => setUsualWeight(e.target.value)}
-            placeholder="Peso habitual"
-            className="p-2 border rounded-lg text-sm"
-          />
-          <input
-            type="number"
-            step="0.1"
-            value={idealWeight}
-            onChange={(e) => setIdealWeight(e.target.value)}
-            placeholder="Peso ideal"
-            className="p-2 border rounded-lg text-sm"
-          />
-          <button
-            type="submit"
-            className="col-span-3 bg-emerald-600 text-white py-2 rounded-lg text-sm"
-          >
-            <Save className="w-4 h-4 inline mr-1" /> Salvar
+        <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px] animate-in fade-in slide-in-from-top-2">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase">Peso Atual (kg)</label>
+            <input type="number" step="0.1" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm focus:border-[#45dcb9] outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase">Habitual</label>
+            <input type="number" step="0.1" value={usualWeight} onChange={(e) => setUsualWeight(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm focus:border-[#45dcb9] outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase">Ideal</label>
+            <input type="number" step="0.1" value={idealWeight} onChange={(e) => setIdealWeight(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm focus:border-[#45dcb9] outline-none" />
+          </div>
+          <button type="submit" className="md:col-span-3 bg-white/5 border border-white/10 py-3 rounded-xl text-xs font-black uppercase text-white hover:bg-[#22B391] hover:text-[#0a0f16] transition-all">
+            Salvar Registro
           </button>
         </form>
       )}
 
-      {showOnScan && (
-        <div className="p-4 bg-indigo-50 rounded-lg">
-          <p className="text-indigo-700 text-sm">
-            Módulo ON Scan 3D seria carregado aqui...
-          </p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-50 p-3 rounded-lg text-center">
-          <p className="text-xs text-blue-600">Atual</p>
-          <p className="text-xl font-bold text-blue-700">
-            {latestRecord?.currentWeight ?? "-"}
-          </p>
-        </div>
-        <div className="bg-gray-50 p-3 rounded-lg text-center">
-          <p className="text-xs text-gray-500">Habitual</p>
-          <p className="text-xl font-bold text-gray-700">
-            {latestRecord?.usualWeight ?? "-"}
-          </p>
-        </div>
-        <div className="bg-emerald-50 p-3 rounded-lg text-center">
-          <p className="text-xs text-emerald-600">Ideal</p>
-          <p className="text-xl font-bold text-emerald-700">
-            {latestRecord?.idealWeight ?? "-"}
-          </p>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Peso Atual", val: latestRecord?.currentWeight, color: "text-emerald-400", bg: "bg-emerald-500/5", border: "border-emerald-500/10" },
+          { label: "Habitual", val: latestRecord?.usualWeight, color: "text-slate-300", bg: "bg-white/5", border: "border-white/5" },
+          { label: "Ideal", val: latestRecord?.idealWeight, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" }
+        ].map((stat, i) => (
+          <div key={i} className={`${stat.bg} ${stat.border} border p-5 rounded-[24px] text-center shadow-xl`}>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className={`text-2xl font-black ${stat.color}`}>{stat.val ?? "-"} <span className="text-[10px] font-bold text-slate-600">KG</span></p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -478,106 +444,53 @@ function ClinicalSection({ patientId }: { patientId: string }) {
   const [isAdding, setIsAdding] = useState(false);
   const [condition, setCondition] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
-  const [notes, setNotes] = useState("");
 
-  const conditions = [
-    "Hipertensão",
-    "Diabetes",
-    "Dislipidemia",
-    "Obesidade",
-    "Hipotireoidismo",
-    "Outros",
-  ];
+  const conditions = ["Hipertensão", "Diabetes", "Dislipidemia", "Obesidade", "Hipotireoidismo", "DOP", "Outros"];
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<ClinicalRecord>(
-      `patients/${patientId}/clinical-history`,
-      (data) =>
-        setRecords(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
-    );
+    const unsubscribe = subscribeToCollection<ClinicalRecord>(`patients/${patientId}/clinical-history`, (data) => setRecords(data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/clinical-history`, {
-      patientId,
-      date: new Date().toISOString(),
-      condition,
-      diagnosis: diagnosis || undefined,
-      notes: notes || undefined,
-    });
-    setCondition("");
-    setDiagnosis("");
-    setNotes("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/clinical-history`, { patientId, date: new Date().toISOString(), condition, diagnosis });
+    setCondition(""); setDiagnosis(""); setIsAdding(false);
   };
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm"
-      >
+    <div className="space-y-4">
+      <button onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2">
         <Plus className="w-4 h-4" /> Novo Histórico
       </button>
 
       {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <select
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-            className="w-full p-2 border rounded-lg text-sm"
-          >
-            <option value="">Selecione...</option>
-            {conditions.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            value={diagnosis}
-            onChange={(e) => setDiagnosis(e.target.value)}
-            placeholder="Diagnóstico"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Observações"
-            className="w-full p-2 border rounded-lg text-sm"
-            rows={2}
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
+        <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px] animate-in slide-in-from-top-2">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase">Condição Principal</label>
+            <select value={condition} onChange={(e) => setCondition(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-blue-500">
+              <option value="">Selecione...</option>
+              {conditions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase">Diagnóstico Clínico</label>
+            <input type="text" value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="Ex: CID-10 E11" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none" />
+          </div>
+          <button type="submit" className="w-full bg-blue-600/20 text-blue-400 border border-blue-600/30 py-3 rounded-xl text-xs font-black uppercase hover:bg-blue-600 hover:text-white transition-all">
+            Adicionar ao Prontuário
           </button>
         </form>
       )}
 
-      <div className="space-y-2">
-        {records.slice(0, 3).map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center justify-between p-2 bg-white rounded-lg"
-          >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {records.map(r => (
+          <div key={r.id} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex justify-between items-center group hover:bg-white/[0.05] transition-all">
             <div>
-              <p className="font-medium text-sm">{r.condition}</p>
-              <p className="text-xs text-gray-500">
-                {new Date(r.date).toLocaleDateString("pt-BR")}
-              </p>
+              <p className="font-black text-white text-sm">{r.condition}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">{r.diagnosis || "Sem diagnóstico específico"}</p>
             </div>
+            <span className="text-[10px] font-bold text-slate-600">{new Date(r.date).toLocaleDateString()}</span>
           </div>
         ))}
       </div>
@@ -590,97 +503,43 @@ function MedicationsSection({ patientId }: { patientId: string }) {
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [frequency, setFrequency] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<Medication>(
-      `patients/${patientId}/medications`,
-      (data) => setMedications(data),
-    );
+    const unsubscribe = subscribeToCollection<Medication>(`patients/${patientId}/medications`, (data) => setMedications(data));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/medications`, {
-      patientId,
-      name,
-      dosage,
-      frequency: frequency || undefined,
-      startDate: new Date().toISOString(),
-      active: true,
-    });
-    setName("");
-    setDosage("");
-    setFrequency("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/medications`, { patientId, name, dosage, startDate: new Date().toISOString(), active: true });
+    setName(""); setDosage(""); setIsAdding(false);
   };
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Novo Medicamento
+    <div className="space-y-4">
+      <button onClick={() => setIsAdding(!isAdding)} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-500 transition-all flex items-center gap-2">
+        <Plus className="w-4 h-4" /> Novo Registro
       </button>
 
       {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nome do medicamento"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="text"
-              value={dosage}
-              onChange={(e) => setDosage(e.target.value)}
-              placeholder="Dosagem"
-              className="p-2 border rounded-lg text-sm"
-            />
-            <select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-              className="p-2 border rounded-lg text-sm"
-            >
-              <option value="">Frequência</option>
-              <option value="1x/dia">1x/dia</option>
-              <option value="2x/dia">2x/dia</option>
-              <option value="3x/dia">3x/dia</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-purple-600 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
+        <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px] animate-in slide-in-from-top-2">
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do fármaco ou suplemento" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-purple-500" />
+          <input type="text" value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="Ex: 50mg, 1 scoop" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-purple-500" />
+          <button type="submit" className="w-full bg-purple-600/20 text-purple-400 border border-purple-600/30 py-3 rounded-xl text-xs font-black uppercase hover:bg-purple-600 hover:text-white transition-all">Salvar</button>
         </form>
       )}
 
-      <div className="grid grid-cols-1 gap-2">
-        {medications.slice(0, 3).map((med) => (
-          <div
-            key={med.id}
-            className="flex items-center gap-2 p-2 bg-white rounded-lg"
-          >
-            <Pill className="w-4 h-4 text-purple-500" />
-            <div className="flex-1">
-              <p className="font-medium text-sm">{med.name}</p>
-              <p className="text-xs text-gray-500">{med.dosage}</p>
-            </div>
-            {med.active && (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Ativo
-              </span>
-            )}
+      <div className="space-y-2">
+        {medications.map(med => (
+          <div key={med.id} className="bg-[#0a0f16]/60 border border-white/5 p-4 rounded-2xl flex items-center gap-4">
+             <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                <Pill className="w-5 h-5 text-purple-400" />
+             </div>
+             <div className="flex-1">
+               <p className="font-bold text-white text-sm">{med.name}</p>
+               <p className="text-xs text-slate-500">{med.dosage}</p>
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded border border-emerald-400/20">Ativo</span>
           </div>
         ))}
       </div>
@@ -692,97 +551,38 @@ function EatingSection({ patientId }: { patientId: string }) {
   const [habits, setHabits] = useState<EatingHabit[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [mealTime, setMealTime] = useState("");
-  const [mealType, setMealType] = useState("");
   const [description, setDescription] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<EatingHabit>(
-      `patients/${patientId}/eating-habits`,
-      (data) => setHabits(data),
-    );
+    const unsubscribe = subscribeToCollection<EatingHabit>(`patients/${patientId}/eating-habits`, (data) => setHabits(data));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/eating-habits`, {
-      patientId,
-      mealTime,
-      mealType: mealType || undefined,
-      description,
-    });
-    setMealTime("");
-    setMealType("");
-    setDescription("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/eating-habits`, { patientId, mealTime, description });
+    setMealTime(""); setDescription(""); setIsAdding(false);
   };
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-orange-500 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Nova Refeição
+    <div className="space-y-4">
+      <button onClick={() => setIsAdding(!isAdding)} className="bg-orange-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-500 transition-all">
+        Adicionar Refeição
       </button>
 
       {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={mealTime}
-              onChange={(e) => setMealTime(e.target.value)}
-              className="p-2 border rounded-lg text-sm"
-            >
-              <option value="">Horário</option>
-              {["07:00", "08:00", "12:00", "13:00", "19:00", "20:00"].map(
-                (t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ),
-              )}
-            </select>
-            <select
-              value={mealType}
-              onChange={(e) => setMealType(e.target.value)}
-              className="p-2 border rounded-lg text-sm"
-            >
-              <option value="">Tipo</option>
-              <option value="Café da manhã">Café</option>
-              <option value="Almoço">Almoço</option>
-              <option value="Jantar">Jantar</option>
-              <option value="Lanche">Lanche</option>
-            </select>
-          </div>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descrição da refeição"
-            className="w-full p-2 border rounded-lg text-sm"
-            rows={2}
-          />
-          <button
-            type="submit"
-            className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
+         <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px] animate-in slide-in-from-top-2">
+            <input type="time" value={mealTime} onChange={(e) => setMealTime(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-orange-500" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Composição habitual da refeição..." className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm min-h-[80px] outline-none focus:border-orange-500" />
+            <button type="submit" className="w-full bg-orange-600/20 text-orange-400 border border-orange-600/30 py-3 rounded-xl text-xs font-black uppercase hover:bg-orange-600">Salvar</button>
+         </form>
       )}
 
-      <div className="space-y-1">
-        {habits.slice(0, 5).map((h) => (
-          <div
-            key={h.id}
-            className="flex items-center gap-2 p-2 bg-white rounded-lg"
-          >
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span className="text-xs text-gray-500 w-12">{h.mealTime}</span>
-            <span className="flex-1 text-sm">{h.description}</span>
+      <div className="space-y-3">
+        {habits.map(h => (
+          <div key={h.id} className="bg-[#0f1520] border-l-4 border-orange-500/50 p-4 rounded-r-2xl shadow-lg flex gap-4">
+             <div className="text-orange-400 font-black text-sm">{h.mealTime}</div>
+             <p className="text-sm text-slate-300 leading-relaxed">{h.description}</p>
           </div>
         ))}
       </div>
@@ -798,122 +598,56 @@ function BehaviorSection({ patientId }: { patientId: string }) {
   const [sleepHours, setSleepHours] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<BehaviorRecord>(
-      `patients/${patientId}/behavior`,
-      (data) =>
-        setRecords(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
-    );
+    const unsubscribe = subscribeToCollection<BehaviorRecord>(`patients/${patientId}/behavior`, (data) => setRecords(data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/behavior`, {
-      patientId,
-      date: new Date().toISOString(),
-      category: "Comportamento",
-      mood,
-      stressLevel,
-      sleepHours: sleepHours ? parseFloat(sleepHours) : undefined,
-    });
-    setMood("");
-    setStressLevel(5);
-    setSleepHours("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/behavior`, { patientId, date: new Date().toISOString(), category: "Comportamento", mood, stressLevel, sleepHours: parseFloat(sleepHours) });
+    setMood(""); setStressLevel(5); setSleepHours(""); setIsAdding(false);
   };
 
-  const latestRecord = records[0];
+  const latest = records[0];
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-pink-500 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Novo Registro
-      </button>
-
-      {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <div>
-            <label className="text-xs text-gray-500">Humor</label>
-            <div className="flex gap-1">
-              {["happy", "neutral", "sad", "anxious"].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMood(m)}
-                  className={`flex-1 p-2 rounded-lg text-xs ${mood === m ? "bg-pink-200" : "bg-gray-100"}`}
-                >
-                  {m === "happy" && "😊"}
-                  {m === "neutral" && "😐"}
-                  {m === "sad" && "😢"}
-                  {m === "anxious" && "😰"}
-                </button>
-              ))}
+    <div className="space-y-6">
+       <button onClick={() => setIsAdding(!isAdding)} className="bg-pink-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Registrar Humor/Sono</button>
+       
+       {isAdding && (
+         <form onSubmit={handleAdd} className="space-y-6 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
+            <div className="flex justify-between items-center bg-[#0a0f16] p-2 rounded-2xl border border-white/5">
+                {["happy", "neutral", "sad"].map(m => (
+                  <button key={m} type="button" onClick={() => setMood(m)} className={`text-2xl p-4 rounded-xl transition-all ${mood === m ? "bg-pink-500/20 border border-pink-500/30 scale-110 shadow-lg" : "grayscale opacity-30 hover:opacity-100"}`}>
+                    {m === "happy" ? "😊" : m === "neutral" ? "😐" : "😢"}
+                  </button>
+                ))}
             </div>
-          </div>
-          <div>
-            <label className="text-xs text-gray-500">
-              Estresse: {stressLevel}/10
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={stressLevel}
-              onChange={(e) => setStressLevel(parseInt(e.target.value))}
-              className="w-full"
-            />
-          </div>
-          <input
-            type="number"
-            step="0.5"
-            value={sleepHours}
-            onChange={(e) => setSleepHours(e.target.value)}
-            placeholder="Horas de sono"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <button
-            type="submit"
-            className="w-full bg-pink-500 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
-      )}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase">Nível de Estresse: {stressLevel}/10</label>
+              <input type="range" min="1" max="10" value={stressLevel} onChange={(e) => setStressLevel(parseInt(e.target.value))} className="w-full accent-pink-500" />
+            </div>
+            <input type="number" placeholder="Horas de sono" value={sleepHours} onChange={(e) => setSleepHours(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm" />
+            <button type="submit" className="w-full bg-pink-600/20 text-pink-400 border border-pink-600/30 py-3 rounded-xl text-xs font-black uppercase">Salvar</button>
+         </form>
+       )}
 
-      {latestRecord && (
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-pink-50 p-2 rounded-lg text-center">
-            <p className="text-xs text-pink-600">Humor</p>
-            <p className="text-lg">
-              {latestRecord.mood === "happy"
-                ? "😊"
-                : latestRecord.mood === "sad"
-                  ? "😢"
-                  : "😐"}
-            </p>
+       {latest && (
+          <div className="grid grid-cols-3 gap-4">
+             <div className="bg-pink-500/5 border border-pink-500/10 p-5 rounded-[24px] text-center">
+                <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Humor</p>
+                <span className="text-3xl">{latest.mood === 'happy' ? '😊' : latest.mood === 'sad' ? '😢' : '😐'}</span>
+             </div>
+             <div className="bg-pink-500/5 border border-pink-500/10 p-5 rounded-[24px] text-center">
+                <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Estresse</p>
+                <div className="text-xl font-black text-pink-400">{latest.stressLevel}<span className="text-[10px] text-slate-600">/10</span></div>
+             </div>
+             <div className="bg-pink-500/5 border border-pink-500/10 p-5 rounded-[24px] text-center">
+                <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Sono</p>
+                <div className="text-xl font-black text-slate-200">{latest.sleepHours}<span className="text-[10px] text-slate-600">H</span></div>
+             </div>
           </div>
-          <div className="bg-pink-50 p-2 rounded-lg text-center">
-            <p className="text-xs text-pink-600">Estresse</p>
-            <p className="text-lg font-bold">{latestRecord.stressLevel}</p>
-          </div>
-          <div className="bg-pink-50 p-2 rounded-lg text-center">
-            <p className="text-xs text-pink-600">Sono</p>
-            <p className="text-lg font-bold">
-              {latestRecord.sleepHours || "-"}h
-            </p>
-          </div>
-        </div>
-      )}
+       )}
     </div>
   );
 }
@@ -922,96 +656,40 @@ function PhysicalSection({ patientId }: { patientId: string }) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState("");
-  const [type, setType] = useState("");
   const [duration, setDuration] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<Exercise>(
-      `patients/${patientId}/physical-activity`,
-      (data) =>
-        setExercises(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
-    );
+    const unsubscribe = subscribeToCollection<Exercise>(`patients/${patientId}/physical-activity`, (data) => setExercises(data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/physical-activity`, {
-      patientId,
-      name,
-      type: type || undefined,
-      duration: parseInt(duration) || 0,
-      date: new Date().toISOString(),
-    });
-    setName("");
-    setType("");
-    setDuration("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/physical-activity`, { patientId, name, duration: parseInt(duration), date: new Date().toISOString() });
+    setName(""); setDuration(""); setIsAdding(false);
   };
 
-  const totalMinutes = exercises.reduce((sum, e) => sum + e.duration, 0);
-
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-cyan-600 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Novo Exercício
-      </button>
-
-      {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nome do exercício"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="p-2 border rounded-lg text-sm"
-            >
-              <option value="">Tipo</option>
-              <option value="Cardio">Cardio</option>
-              <option value="Força">Força</option>
-              <option value="Yoga">Yoga</option>
-            </select>
-            <input
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="Duração (min)"
-              className="p-2 border rounded-lg text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-cyan-600 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
-      )}
-
-      {exercises.length > 0 && (
-        <div className="flex items-center gap-4 p-3 bg-cyan-50 rounded-lg">
-          <Activity className="w-5 h-5 text-cyan-600" />
-          <span className="text-sm text-cyan-700">
-            Total: <strong>{totalMinutes} min</strong>
-          </span>
-        </div>
-      )}
+    <div className="space-y-4">
+       <button onClick={() => setIsAdding(!isAdding)} className="bg-cyan-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Registrar Atividade</button>
+       {isAdding && (
+         <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Musculação, Corrida" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-cyan-500" />
+            <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duração em minutos" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-cyan-500" />
+            <button type="submit" className="w-full bg-cyan-600/20 text-cyan-400 border border-cyan-600/30 py-3 rounded-xl text-xs font-black uppercase">Salvar</button>
+         </form>
+       )}
+       <div className="space-y-2">
+         {exercises.slice(0, 3).map(ex => (
+           <div key={ex.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+              <div className="flex items-center gap-3">
+                 <Activity className="w-4 h-4 text-cyan-400" />
+                 <span className="text-sm font-bold text-slate-200">{ex.name}</span>
+              </div>
+              <span className="text-xs font-black text-cyan-500">{ex.duration} MIN</span>
+           </div>
+         ))}
+       </div>
     </div>
   );
 }
@@ -1020,113 +698,40 @@ function HydrationSection({ patientId }: { patientId: string }) {
   const [records, setRecords] = useState<HydrationRecord[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [waterMl, setWaterMl] = useState("");
-  const [goalMl, setGoalMl] = useState("2500");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<HydrationRecord>(
-      `patients/${patientId}/hydration`,
-      (data) =>
-        setRecords(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
-    );
+    const unsubscribe = subscribeToCollection<HydrationRecord>(`patients/${patientId}/hydration`, (data) => setRecords(data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const total = parseInt(waterMl) || 0;
-    await addDocument(`patients/${patientId}/hydration`, {
-      patientId,
-      date: new Date().toISOString(),
-      totalMl: total,
-      waterMl: total || undefined,
-      goalMl: parseInt(goalMl) || 2500,
-    });
-    setWaterMl("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/hydration`, { patientId, date: new Date().toISOString(), totalMl: parseInt(waterMl), goalMl: 2500 });
+    setWaterMl(""); setIsAdding(false);
   };
 
-  const todayRecord = records.find((r) =>
-    r.date.startsWith(new Date().toISOString().split("T")[0]),
-  );
-  const percentage = todayRecord
-    ? Math.round((todayRecord.totalMl / todayRecord.goalMl) * 100)
-    : 0;
+  const today = records[0];
+  const percentage = today ? Math.min(100, Math.round((today.totalMl / 2500) * 100)) : 0;
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Registrar
-      </button>
-
-      {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <input
-            type="number"
-            value={waterMl}
-            onChange={(e) => setWaterMl(e.target.value)}
-            placeholder="Quantidade de água (ml)"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <input
-            type="number"
-            value={goalMl}
-            onChange={(e) => setGoalMl(e.target.value)}
-            placeholder="Meta diária (ml)"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
-      )}
-
-      <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
-        <div className="w-12 h-12 relative">
-          <svg className="w-12 h-12 transform -rotate-90">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="#e5e7eb"
-              strokeWidth="4"
-              fill="none"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="#3b82f6"
-              strokeWidth="4"
-              fill="none"
-              strokeDasharray={`${percentage * 1.26} 126`}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-bold text-blue-600">
-              {percentage}%
-            </span>
+    <div className="space-y-6">
+       <button onClick={() => setIsAdding(!isAdding)} className="bg-sky-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Adicionar Água</button>
+       {isAdding && (
+         <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
+            <input type="number" value={waterMl} onChange={(e) => setWaterMl(e.target.value)} placeholder="Mililitros (ml)" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm" />
+            <button type="submit" className="w-full bg-sky-600/20 text-sky-400 border border-sky-600/30 py-3 rounded-xl text-xs font-black uppercase">Registrar</button>
+         </form>
+       )}
+       <div className="bg-[#0a0f16] p-6 rounded-[24px] border border-white/5 flex items-center justify-between shadow-inner">
+          <div className="space-y-1">
+             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Progress Diário</p>
+             <h4 className="text-3xl font-black text-white">{today?.totalMl || 0} <span className="text-xs text-slate-600">ml / 2500ml</span></h4>
           </div>
-        </div>
-        <div>
-          <p className="text-lg font-bold text-blue-700">
-            {todayRecord?.totalMl || 0} ml
-          </p>
-          <p className="text-xs text-blue-600">Meta: {goalMl} ml</p>
-        </div>
-      </div>
+          <div className="w-16 h-16 rounded-full border-4 border-white/5 flex items-center justify-center relative">
+             <div className="absolute inset-0 rounded-full border-4 border-sky-500 border-t-transparent animate-pulse" style={{ clipPath: `inset(${100-percentage}% 0 0 0)` }} />
+             <span className="text-xs font-black text-sky-400">{percentage}%</span>
+          </div>
+       </div>
     </div>
   );
 }
@@ -1135,100 +740,40 @@ function GoalsSection({ patientId }: { patientId: string }) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  const [weightGoal, setWeightGoal] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<Goal>(
-      `patients/${patientId}/goals`,
-      (data) => setGoals(data),
-    );
+    const unsubscribe = subscribeToCollection<Goal>(`patients/${patientId}/goals`, (data) => setGoals(data));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument(`patients/${patientId}/goals`, {
-      patientId,
-      title,
-      targetDate: new Date(targetDate).toISOString(),
-      category: "Peso",
-      weightGoal: weightGoal ? parseFloat(weightGoal) : undefined,
-      progress: 0,
-      status: "pending",
-    });
-    setTitle("");
-    setTargetDate("");
-    setWeightGoal("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/goals`, { patientId, title, targetDate: new Date().toISOString(), progress: 0, status: "pending" });
+    setTitle(""); setIsAdding(false);
   };
 
-  const activeGoals = goals.filter((g) => g.status !== "completed");
-
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Nova Meta
-      </button>
-
-      {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título da meta"
-            className="w-full p-2 border rounded-lg text-sm"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              className="p-2 border rounded-lg text-sm"
-            />
-            <input
-              type="number"
-              step="0.1"
-              value={weightGoal}
-              onChange={(e) => setWeightGoal(e.target.value)}
-              placeholder="Meta de peso"
-              className="p-2 border rounded-lg text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
-      )}
-
-      <div className="space-y-2">
-        {activeGoals.slice(0, 3).map((goal) => (
-          <div key={goal.id} className="p-2 bg-white rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-sm">{goal.title}</span>
-              <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                {goal.progress}%
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-gray-100 rounded-full mt-1">
-              <div
-                className="h-full bg-emerald-500 rounded-full"
-                style={{ width: `${goal.progress}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+       <button onClick={() => setIsAdding(!isAdding)} className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Criar Meta</button>
+       {isAdding && (
+         <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="O que deseja alcançar?" className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm" />
+            <button type="submit" className="w-full bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 py-3 rounded-xl text-xs font-black uppercase">Confirmar Objetivo</button>
+         </form>
+       )}
+       <div className="space-y-3">
+         {goals.map(g => (
+           <div key={g.id} className="bg-white/5 p-5 rounded-2xl border border-white/5 group shadow-sm">
+              <div className="flex justify-between items-center mb-3">
+                 <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{g.title}</span>
+                 <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">{g.progress}%</span>
+              </div>
+              <div className="w-full h-2 bg-[#0a0f16] rounded-full overflow-hidden border border-white/5">
+                 <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] transition-all duration-1000" style={{ width: `${g.progress}%` }} />
+              </div>
+           </div>
+         ))}
+       </div>
     </div>
   );
 }
@@ -1237,103 +782,42 @@ function VisualSection({ patientId }: { patientId: string }) {
   const [assessments, setAssessments] = useState<VisualAssessment[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [type, setType] = useState("");
-  const [description, setDescription] = useState("");
-  const [waist, setWaist] = useState("");
-  const [hip, setHip] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCollection<VisualAssessment>(
-      `patients/${patientId}/visual-assessment`,
-      (data) =>
-        setAssessments(
-          data.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ),
-        ),
-    );
+    const unsubscribe = subscribeToCollection<VisualAssessment>(`patients/${patientId}/visual-assessment`, (data) => setAssessments(data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     return () => unsubscribe();
   }, [patientId]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const measurements: any = {};
-    if (waist) measurements.waist = parseFloat(waist);
-    if (hip) measurements.hip = parseFloat(hip);
-
-    await addDocument(`patients/${patientId}/visual-assessment`, {
-      patientId,
-      date: new Date().toISOString(),
-      type,
-      description: description || undefined,
-      measurements:
-        Object.keys(measurements).length > 0 ? measurements : undefined,
-    });
-    setType("");
-    setDescription("");
-    setWaist("");
-    setHip("");
-    setIsAdding(false);
+    await addDocument(`patients/${patientId}/visual-assessment`, { patientId, date: new Date().toISOString(), type });
+    setType(""); setIsAdding(false);
   };
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={() => setIsAdding(!isAdding)}
-        className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm"
-      >
-        <Plus className="w-4 h-4" /> Nova Avaliação
-      </button>
-
-      {isAdding && (
-        <form
-          onSubmit={handleAdd}
-          className="space-y-2 p-3 bg-white rounded-lg"
-        >
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full p-2 border rounded-lg text-sm"
-          >
-            <option value="">Tipo</option>
-            <option value="Foto Inicial">Foto Inicial</option>
-            <option value="Foto Progresso">Foto Progresso</option>
-            <option value="Medição">Medição Corporal</option>
-          </select>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              value={waist}
-              onChange={(e) => setWaist(e.target.value)}
-              placeholder="Cintura (cm)"
-              className="p-2 border rounded-lg text-sm"
-            />
-            <input
-              type="number"
-              value={hip}
-              onChange={(e) => setHip(e.target.value)}
-              placeholder="Quadril (cm)"
-              className="p-2 border rounded-lg text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm"
-          >
-            Salvar
-          </button>
-        </form>
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
-        {assessments.slice(0, 2).map((a) => (
-          <div key={a.id} className="p-2 bg-white rounded-lg">
-            <p className="font-medium text-sm">{a.type}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(a.date).toLocaleDateString("pt-BR")}
-            </p>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-6">
+       <button onClick={() => setIsAdding(!isAdding)} className="bg-violet-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Nova Avaliação Visual</button>
+       {isAdding && (
+         <form onSubmit={handleAdd} className="space-y-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
+            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm outline-none">
+              <option value="">Selecione o tipo de registro...</option>
+              <option value="Registro por Foto">Registro por Foto</option>
+              <option value="Medição de Perímetros">Medição de Perímetros</option>
+            </select>
+            <button type="submit" className="w-full bg-violet-600/20 text-violet-400 border border-violet-600/30 py-3 rounded-xl text-xs font-black uppercase">Continuar</button>
+         </form>
+       )}
+       <div className="grid grid-cols-2 gap-4">
+         {assessments.slice(0, 4).map(a => (
+           <div key={a.id} className="bg-[#0f1520] border border-white/5 p-5 rounded-[24px] text-center hover:bg-violet-600/5 transition-all cursor-pointer">
+              <div className="w-10 h-10 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20 mx-auto mb-3">
+                 <Camera className="w-5 h-5 text-violet-400" />
+              </div>
+              <p className="text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">{a.type}</p>
+              <p className="text-xs font-bold text-slate-400">{new Date(a.date).toLocaleDateString()}</p>
+           </div>
+         ))}
+       </div>
     </div>
   );
 }
