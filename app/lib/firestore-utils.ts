@@ -1,7 +1,6 @@
 /**
- * firestore-utils.ts  →  supabase-utils.ts (compatível)
- * Shim que mantém a API pública mas usa Supabase em vez de Firebase.
- * Isso evita quebrar importações existentes que chamam `testFirestoreConnection`.
+ * firestore-utils.ts - Wrapper que usa Supabase de verdade
+ * Mantém a API pública compatível com código existente
  */
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -14,11 +13,10 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-/** Testa se o Supabase está acessível */
 export async function testFirestoreConnection(): Promise<boolean> {
   if (!isSupabaseConfigured) {
     console.info('Supabase not configured — running in Demo Mode');
-    return true; // Demo mode sempre "conectado"
+    return true;
   }
   try {
     const { error } = await supabase.from('profiles').select('id').limit(1);
@@ -33,26 +31,87 @@ export async function testFirestoreConnection(): Promise<boolean> {
   }
 }
 
-/** Mantido por compatibilidade — não faz nada no Supabase */
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   console.error('[Supabase Error]', { operationType, path, error });
 }
 
-/** Simula subscribeToCollection para compatibilidade */
-export function subscribeToCollection<T = any>(collection: string, callback: (data: T[]) => void, _queryConstraints?: any[]): () => void {
-  console.log(`[Firestore] Simulated subscription to ${collection}`);
-  callback([] as T[]);
-  return () => {};
+export function subscribeToCollection<T = any>(
+  collection: string, 
+  callback: (data: T[]) => void, 
+  queryConstraints?: any[]
+): () => void {
+  if (!isSupabaseConfigured) {
+    console.log(`[Firestore Demo] Simulated subscription to ${collection}`);
+    callback([] as T[]);
+    return () => {};
+  }
+
+  let query = supabase.from(collection).select('*');
+  
+  if (queryConstraints) {
+    queryConstraints.forEach((constraint: any) => {
+      if (constraint.field && constraint.operator && constraint.value) {
+        query = query.eq(constraint.field, constraint.value);
+      }
+    });
+  }
+
+  const channel = supabase
+    .channel(`realtime:${collection}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: collection }, (payload) => {
+      console.log('[Firestore Realtime]', payload);
+    })
+    .subscribe();
+
+  query.then(({ data, error }) => {
+    if (error) {
+      console.error(`[Firestore] Error fetching ${collection}:`, error);
+      callback([] as T[]);
+    } else {
+      callback(data as T[]);
+    }
+  });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
-/** Simula addDocument para compatibilidade */
 export async function addDocument(collection: string, data: any) {
-  console.log(`[Firestore] Simulated add to ${collection}:`, data);
-  return { id: 'mock-id', ...data };
+  if (!isSupabaseConfigured) {
+    console.log(`[Firestore Demo] Simulated add to ${collection}:`, data);
+    return { id: 'demo-id', ...data, created_at: new Date().toISOString() };
+  }
+
+  const { data: result, error } = await supabase
+    .from(collection)
+    .insert([data])
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`[Firestore] Error adding to ${collection}:`, error);
+    throw error;
+  }
+
+  return result;
 }
 
-/** Simula deleteDocument para compatibilidade */
 export async function deleteDocument(collection: string, id: string) {
-  console.log(`[Firestore] Simulated delete from ${collection}:`, id);
+  if (!isSupabaseConfigured) {
+    console.log(`[Firestore Demo] Simulated delete from ${collection}:`, id);
+    return true;
+  }
+
+  const { error } = await supabase
+    .from(collection)
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(`[Firestore] Error deleting from ${collection}:`, error);
+    throw error;
+  }
+
   return true;
 }
