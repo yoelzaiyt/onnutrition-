@@ -175,7 +175,7 @@ const professionalModules: ModuleCard[] = [
   },
   {
     id: "cursos",
-    label: "Cursos & Formação",
+    label: "CURSOS / EDUCAÇÃO",
     icon: BookOpen,
     description: "Formação científica e profissional",
     color: "blue",
