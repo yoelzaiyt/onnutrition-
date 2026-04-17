@@ -174,7 +174,7 @@ const professionalModules: ModuleCard[] = [
     id: "cursos",
     label: "CIÊNCIA & NOBEL",
     icon: Sparkles,
-    description: "Descobertas, FDA e Casos Dublados",
+    description: "Hub Científico de Elite (Netflix Style)",
     color: "amber",
   },
   {

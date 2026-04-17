@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   PlayCircle,
@@ -12,248 +12,578 @@ import {
   Award,
   History,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  Search,
+  Brain,
+  Star,
+  Clock,
+  BookOpen,
+  Info,
+  X,
+  Maximize2,
+  FileText,
+  Video,
+  ExternalLink,
+  Filter
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { pubmedService, PubMedArticle } from "@/app/lib/pubmedService";
+import { 
+  getAICopilotResponse, 
+  summarizeArticle, 
+  isGeminiConfigured 
+} from "@/lib/gemini";
+
+// --- Types ---
+interface ContentItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  desc: string;
+  category: string;
+  type: "video" | "article" | "course" | "news";
+  evidence?: "Alto" | "Médio" | "Baixo";
+  impact?: string;
+  duration?: string;
+  thumb: string;
+  tag?: string;
+  progress?: number;
+  url?: string;
+}
 
 export default function EducationModule() {
-  const [activeTab, setActiveTab] = useState<"discovery" | "videos" | "news">("discovery");
+  const [view, setView] = useState<"home" | "detail">("home");
+  const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // States para Conteúdo
+  const [trends, setTrends] = useState<ContentItem[]>([]);
+  const [discoveries, setDiscoveries] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // AI States
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const tabs = [
-    { id: "discovery", label: "Ciência & Nobel", icon: Sparkles, color: "text-amber-400" },
-    { id: "videos", label: "Vídeos & Casos", icon: PlayCircle, color: "text-emerald-400" },
-    { id: "news", label: "Notícias & FDA", icon: Megaphone, color: "text-blue-400" },
-  ];
-
-  const discoveryContent = [
+  // Mock de Cursos (Netflix Style)
+  const popularCourses: ContentItem[] = [
     {
-      id: "autofagia",
-      title: "Autofagia: O Mecanismo de Renovação Celular",
-      subtitle: "Prêmio Nobel de Fisiologia ou Medicina 2016",
-      desc: "Descoberta pelo Dr. Yoshinori Ohsumi, a autofagia é o processo pelo qual as células degradam e reciclam seus próprios componentes. Na nutrição, este conceito é vital para entender o jejum controlado e a longevidade celular.",
-      impact: "Revolucionou o entendimento sobre doenças neurodegenerativas e metabolismo energético.",
-      icon: Zap,
-      color: "from-amber-500/20 to-orange-500/10",
-      tag: "NOBEL 2016"
+      id: "c-1",
+      title: "Mecanismos de Autofagia",
+      subtitle: "Nobel 2016 - Dr. Yoshinori Ohsumi",
+      desc: "Um guia profundo sobre como o jejum e a nutrição de precisão ativam a reciclagem celular.",
+      category: "Metabolismo",
+      type: "course",
+      duration: "45h",
+      thumb: "https://images.unsplash.com/photo-1532187875605-2fe358a3d46a?auto=format&fit=crop&w=800&q=80",
+      tag: "ELITE",
+      progress: 45
     },
     {
-      id: "fda-2024",
-      title: "Novas Diretrizes de Rotulagem FDA (EUA)",
-      subtitle: "Padronização Global de Nutrientes",
-      desc: "A FDA implementou mudanças rigorosas na forma como açúcares adicionados e vitaminas (D e Potássio) são exibidos. Este módulo explora como adaptar pacientes brasileiros a estes padrões internacionais de excelência.",
-      impact: "Aumento da transparência nutricional e combate à obesidade global.",
-      icon: Shield,
-      color: "from-blue-500/20 to-cyan-500/10",
-      tag: "FDA STANDARDS"
+      id: "c-2",
+      title: "Protocolo FDA 2024",
+      subtitle: "Novas Regras de Rotulagem EUA",
+      desc: "Domine as mudanças regulatórias internacionais que impactam a prescrição clínica.",
+      category: "Regulatório",
+      type: "course",
+      duration: "15h",
+      thumb: "https://images.unsplash.com/photo-1505751172676-43ad27a00949?auto=format&fit=crop&w=800&q=80",
+      tag: "NEW"
+    },
+    {
+      id: "c-3",
+      title: "Manejo da Desnutrição Crítica",
+      subtitle: "Casos Reais Dublados",
+      desc: "Estratégias avançadas de suporte nutricional em ambiente hospitalar e domiciliar.",
+      category: "Clínica",
+      type: "course",
+      duration: "60h",
+      thumb: "https://images.unsplash.com/photo-1576091160550-217359f42f8c?auto=format&fit=crop&w=800&q=80",
+      tag: "REAL CASE"
     }
   ];
 
-  const videoLibrary = [
-    {
-      id: "vid-1",
-      title: "Tratando a Desnutrição com Dieta Enteral",
-      url: "https://www.youtube.com/watch?v=P-u_H9L7xnk",
-      duration: "15:40",
-      type: "CASO REAL DUBALDO",
-      thumb: "https://images.unsplash.com/photo-1576091160550-217359f42f8c?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      id: "vid-2",
-      title: "Descobertas na Autofagia e Longevidade",
-      url: "https://www.youtube.com/watch?v=9v6B9D-oQ4Y",
-      duration: "12:20",
-      type: "CIÊNCIA DUBALDA",
-      thumb: "https://images.unsplash.com/photo-1532187875605-2fe358a3d46a?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      id: "vid-3",
-      title: "Protocolos FDA: O Futuro da Nutrição",
-      url: "https://www.youtube.com/watch?v=4Y2m2_H_P-M",
-      duration: "08:15",
-      type: "INTERNACIONAL DUBALDO",
-      thumb: "https://images.unsplash.com/photo-1505751172676-43ad27a00949?auto=format&fit=crop&w=800&q=80"
-    }
-  ];
+  // Efeito Inicial: Carregar Trends do PubMed
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const pubmedDocs = await pubmedService.searchArticles("clinical nutrition 2024", 6);
+        const formattedTrends: ContentItem[] = pubmedDocs.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          desc: "Estudo recente mapeado via PubMed API (NCBI).",
+          category: "PubMed",
+          type: "article",
+          evidence: "Alto",
+          thumb: "https://images.unsplash.com/photo-1532187875605-2fe358a3d46a?auto=format&fit=crop&w=300&q=80",
+          url: doc.url
+        }));
+        setTrends(formattedTrends);
 
-  const newsItems = [
-    {
-      id: "news-1",
-      source: "WHO / OMS",
-      title: "Novos Protocolos para Desnutrição Grave",
-      desc: "Relatório de 2024 aponta para uso de fórmulas hiperproteicas em ambiente ambulatorial.",
-      tag: "SAÚDE GLOBAL",
-      color: "blue"
-    },
-    {
-      id: "news-2",
-      source: "FDA UPDATES",
-      title: "Aprovação de Novos Alimentos Funcionais",
-      desc: "Novos compostos bioativos recebem selo de segurança para uso em suplementação clínica.",
-      tag: "REGULATÓRIO",
-      color: "emerald"
+        // Mock de Novas Descobertas
+        setDiscoveries([
+          {
+            id: "d-1",
+            title: "Pirâmide Alimentar 2.0 nos EUA",
+            desc: "FDA propõe mudanças drásticas na representação visual de carboidratos.",
+            category: "News",
+            type: "news",
+            thumb: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=300&q=80",
+            tag: "GLOBAL"
+          },
+          {
+            id: "d-2",
+            title: "Microbiota e Performance Atleta",
+            desc: "Novo estudo vincula certas cepas ao aumento de VO2 Max.",
+            category: "Esportiva",
+            type: "article",
+            thumb: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=300&q=80",
+            tag: "HOT"
+          }
+        ]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  const handleOpenDetail = async (item: ContentItem) => {
+    setSelectedItem(item);
+    setView("detail");
+    setShowAIPanel(false);
+    setAiAnalysis(null);
+    
+    // Auto-analisar se for artigo
+    if (item.type === "article" || item.type === "news") {
+      setIsAiLoading(true);
+      try {
+        const analysis = await summarizeArticle(item.title, item.desc);
+        setAiAnalysis(analysis);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsAiLoading(false);
+      }
     }
-  ];
+  };
+
+  const handleExplainAI = async () => {
+    if (!selectedItem) return;
+    setShowAIPanel(true);
+    if (!aiAnalysis) {
+       setIsAiLoading(true);
+       try {
+         const analysis = await summarizeArticle(selectedItem.title, selectedItem.desc);
+         setAiAnalysis(analysis);
+       } catch (err) {
+         console.error(err);
+       } finally {
+         setIsAiLoading(false);
+       }
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden font-sans text-slate-200">
+    <div className="flex flex-col h-full bg-[#030712] rounded-[32px] shadow-3xl border border-white/5 overflow-hidden font-sans text-slate-200">
       
-      {/* Header Premium */}
-      <div className="relative border-b border-white/5 bg-[#0f1520] p-6 overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#22B391] rounded-full blur-[100px] opacity-10 mix-blend-screen pointer-events-none" />
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#22B391]/20 to-[#125c4a]/10 border border-[#22B391]/30 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(34,179,145,0.2)]">
-            <GraduationCap className="w-6 h-6 text-[#45dcb9]" />
+      {/* 🔍 TOP NAV / SEARCH */}
+      <nav className="z-50 border-b border-white/5 bg-[#030712]/80 backdrop-blur-xl p-4 flex items-center justify-between px-8">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              HUB CIÊNCIA & NOBEL
-              <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#22B391]/20 text-[#45dcb9] border border-[#22B391]/30">Elite Edition</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-1 font-medium">
-              Descobertas Nobel • Padrões FDA • Casos Reais Dublados
-            </p>
+            <h2 className="text-sm font-black text-white tracking-widest uppercase mb-0.5">ONN Science Hub</h2>
+            <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest">Netflix de Inteligência Científica</p>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-white/5 overflow-x-auto bg-[#0a0f16] px-4 pt-2 custom-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${
-              activeTab === tab.id
-                ? "border-[#45dcb9] text-white bg-[#ffffff05]"
-                : "border-transparent text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? tab.color : ""}`} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+        <div className="flex-1 max-w-xl mx-8 relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Pesquisar estudos, cursos ou temas via IA..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all"
+          />
+        </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-8 scroll-smooth custom-scrollbar">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
-          
-          {/* Main Area */}
-          <div className="lg:col-span-8 space-y-8">
-            {activeTab === "discovery" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {discoveryContent.map((item) => (
-                  <motion.div 
-                    key={item.id}
-                    whileHover={{ scale: 1.01 }}
-                    className={`relative p-8 rounded-[40px] border border-white/5 bg-gradient-to-br ${item.color} overflow-hidden group shadow-2xl`}
-                  >
-                    <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">
-                      <item.icon className="w-16 h-16 text-white" />
-                    </div>
-                    <div className="relative z-10">
-                      <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest text-white mb-4 inline-block">{item.tag}</span>
-                      <h3 className="text-3xl font-black text-white tracking-tighter mb-2">{item.title}</h3>
-                      <p className="text-[#45dcb9] font-bold text-sm mb-4">{item.subtitle}</p>
-                      <p className="text-slate-300 text-base leading-relaxed mb-6 max-w-2xl">{item.desc}</p>
-                      <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                        <p className="text-xs text-slate-400 font-medium italic"><span className="text-[#45dcb9] font-bold">Impacto Clínico:</span> {item.impact}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+        <div className="flex items-center gap-4">
+           <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-full">
+              <Brain className="w-4 h-4 text-purple-400" />
+              <span className="text-[10px] font-black text-purple-300 uppercase tracking-widest">Gemini Neural Active</span>
+           </div>
+           <button className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors">
+              <Filter className="w-4 h-4 text-slate-400" />
+           </button>
+        </div>
+      </nav>
 
-            {activeTab === "videos" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {videoLibrary.map((vid) => (
-                  <motion.div 
-                    key={vid.id}
-                    whileHover={{ y: -5 }}
-                    className="bg-[#0f1520] rounded-[32px] border border-white/5 overflow-hidden group shadow-xl"
-                  >
-                    <div className="relative aspect-video">
-                      <img src={vid.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={vid.title} />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-16 h-16 bg-[#22B391] rounded-full flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform">
-                          <Play className="w-6 h-6 text-[#0a0f16] fill-current" />
-                        </div>
-                      </div>
-                      <span className="absolute bottom-4 right-4 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[10px] font-bold text-white uppercase">{vid.duration}</span>
-                    </div>
-                    <div className="p-6">
-                      <span className="text-[9px] font-black text-[#22B391] tracking-widest uppercase mb-1 block">{vid.type}</span>
-                      <h4 className="text-white font-black leading-tight group-hover:text-[#45dcb9] transition-colors">{vid.title}</h4>
-                      <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-white transition-colors cursor-pointer">
-                         Assistir Agora <ArrowRight className="w-3 h-3"/>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === "news" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {newsItems.map((news) => (
-                  <div key={news.id} className="bg-[#0f1520] rounded-[32px] p-8 border border-white/5 relative overflow-hidden group hover:border-[#45dcb9]/30 transition-all">
-                    <div className={`absolute top-0 right-0 w-32 h-32 bg-${news.color}-500/10 rounded-full blur-3xl`} />
-                    <span className={`text-[10px] font-black text-${news.color}-400 uppercase tracking-widest mb-2 block`}>{news.source}</span>
-                    <h3 className="text-xl font-black text-white mb-2 group-hover:text-[#45dcb9] transition-colors">{news.title}</h3>
-                    <p className="text-sm text-slate-400 leading-relaxed italic">{news.desc}</p>
+      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+        <AnimatePresence mode="wait">
+          {view === "home" ? (
+            <motion.div 
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="pb-20"
+            >
+              {/* 🎬 HERO BANNER */}
+              <section className="relative h-[480px] w-full group overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1920&q=80" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[3000ms]" 
+                  alt="Metabolismo"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/60 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-12 lg:p-20 space-y-6">
+                  <div className="flex items-center gap-2">
+                     <span className="px-3 py-1 bg-blue-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest">Tendência Profissional</span>
+                     <span className="text-white/40 text-xs font-bold">• 2024 UPDATE</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-6">
-              <div className="bg-[#0f1520] p-8 rounded-[40px] border border-white/5 relative overflow-hidden">
-                  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#22B391] rounded-full blur-[80px] opacity-10" />
-                  <div className="relative z-10 text-center">
-                      <div className="w-20 h-20 bg-[#22B391]/10 rounded-[30px] border border-[#22B391]/20 flex items-center justify-center mx-auto mb-6">
-                          <Award className="w-10 h-10 text-[#45dcb9]" />
-                      </div>
-                      <h4 className="text-xl font-black text-white italic tracking-tighter">Elite Reader</h4>
-                      <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest leading-relaxed">Conteúdo rigorosamente selecionado de fontes Nobéis e órgãos internacionais.</p>
-                      
-                      <div className="mt-8 space-y-3">
-                         <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 2 }} className="h-full bg-gradient-to-r from-[#22B391] to-[#45dcb9]" />
-                         </div>
-                         <div className="flex justify-between text-[9px] font-black text-white/40 uppercase tracking-widest">
-                            <span>Selo de Qualidde</span>
-                            <span>Auditado</span>
-                         </div>
-                      </div>
+                  <h1 className="text-6xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] max-w-4xl drop-shadow-2xl">A Nova Era da Autofagia & Longevidade</h1>
+                  <p className="text-lg text-slate-300 max-w-2xl font-medium leading-relaxed italic">
+                    Descubra como os novos biomarcadores estão moldando protocolos clínicos de jejum e rejuvenescimento celular baseados no Nobel 2016.
+                  </p>
+                  <div className="flex items-center gap-4 pt-4">
+                    <button 
+                      onClick={() => handleOpenDetail(popularCourses[0])}
+                      className="px-8 py-4 bg-white text-[#030712] rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-blue-400 hover:text-white transition-all hover:scale-105 active:scale-95"
+                    >
+                      <Play className="w-5 h-5 fill-current" /> Assistir Agora
+                    </button>
+                    <button className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-2 hover:bg-white/20 transition-all">
+                      <Bookmark className="w-5 h-5" /> Adicionar à Minha Lista
+                    </button>
+                    <button className="w-14 h-14 rounded-2xl border border-white/20 flex items-center justify-center hover:bg-white/5 transition-colors">
+                      <Info className="w-6 h-6 text-white" />
+                    </button>
                   </div>
-              </div>
+                </div>
+              </section>
 
-              <div className="bg-[#0f1520]/50 p-6 rounded-[32px] border border-white/5 backdrop-blur-sm">
-                 <h5 className="text-[11px] font-black text-slate-500 mb-4 uppercase tracking-[0.2em] flex items-center gap-2 px-2"><History className="w-4 h-4" /> Recentes</h5>
-                 <div className="space-y-2">
-                    {["Protocolo Autofagia", "FDA USA Review", "Caso Desnutrição"].map((item) => (
-                      <div key={item} className="p-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center justify-between group">
-                         {item}
-                         <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
-                      </div>
-                    ))}
+              {/* 📊 ROWS */}
+              <div className="px-8 space-y-16 -mt-10 relative z-10">
+                
+                {/* 1. Tendências Científicas (Horizontal Infinite Scroll Mock) */}
+                <section>
+                   <div className="flex items-center justify-between mb-6 px-4">
+                      <h3 className="text-2xl font-black text-white italic tracking-tighter flex items-center gap-3">
+                         <Zap className="w-6 h-6 text-blue-500" /> Tendências Científicas 
+                         <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full not-italic">REAL TIME</span>
+                      </h3>
+                      <button className="text-xs font-black text-slate-500 hover:text-white transition-colors uppercase tracking-[0.2em]">Ver Todos</button>
+                   </div>
+                   <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar">
+                      {trends.map((item) => (
+                        <motion.div 
+                          key={item.id}
+                          whileHover={{ y: -5, scale: 1.02 }}
+                          onClick={() => handleOpenDetail(item)}
+                          className="min-w-[320px] lg:min-w-[400px] snap-start bg-[#0f1523] rounded-[32px] border border-white/5 overflow-hidden group cursor-pointer shadow-2xl"
+                        >
+                          <div className="relative h-48">
+                             <img src={item.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" />
+                             <div className="absolute inset-0 bg-gradient-to-t from-[#0f1523] to-transparent" />
+                             <span className="absolute top-4 right-4 px-3 py-1 bg-blue-500/80 backdrop-blur-md rounded-full text-[9px] font-black text-white">{item.category}</span>
+                          </div>
+                          <div className="p-6">
+                             <div className="flex items-center gap-2 mb-2">
+                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${item.evidence === 'Alto' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-slate-500/30 text-slate-400 bg-slate-500/10'}`}>
+                                   EVIDÊNCIA: {item.evidence}
+                                </span>
+                             </div>
+                             <h4 className="text-lg font-black text-white tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2">{item.title}</h4>
+                             <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tracking-widest flex items-center gap-1"><BookOpen className="w-3 h-3"/> Ler Estudo</span>
+                                <ArrowRight className="w-4 h-4 text-slate-700 group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                             </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                   </div>
+                </section>
+
+                {/* 🎓 Cursos em Alta */}
+                <section>
+                   <div className="flex items-center justify-between mb-6 px-4">
+                      <h3 className="text-2xl font-black text-white italic tracking-tighter flex items-center gap-3">
+                         <PlayCircle className="w-6 h-6 text-emerald-500" /> Cursos em Alta
+                      </h3>
+                      <button className="text-xs font-black text-slate-500 hover:text-white transition-colors uppercase tracking-[0.2em]">Sua Trilha</button>
+                   </div>
+                   <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar">
+                      {popularCourses.map((item) => (
+                        <motion.div 
+                          key={item.id}
+                          whileHover={{ scale: 1.05 }}
+                          onClick={() => handleOpenDetail(item)}
+                          className="min-w-[280px] lg:min-w-[320px] aspect-[2/3] snap-start bg-[#0f1523] rounded-[40px] border border-white/5 overflow-hidden group cursor-pointer shadow-3xl relative"
+                        >
+                          <img src={item.thumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] brightness-50" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end">
+                             <span className="w-fit px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded mb-2 uppercase">{item.tag}</span>
+                             <h4 className="text-2xl font-black text-white tracking-tight leading-none mb-4 group-hover:text-emerald-400 transition-colors">{item.title}</h4>
+                             <p className="text-xs text-slate-400 line-clamp-2 font-medium mb-6 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">{item.desc}</p>
+                             
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 text-[10px] font-black text-white uppercase tracking-widest">
+                                   <Clock className="w-3.5 h-3.5" /> {item.duration}
+                                </div>
+                                {item.progress && (
+                                   <div className="text-[10px] font-black text-emerald-400">{item.progress}%</div>
+                                )}
+                             </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                   </div>
+                </section>
+
+                {/* 🦷 Novas Descobertas (Quick Cards) */}
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   {discoveries.map((item) => (
+                      <motion.div 
+                        key={item.id}
+                        whileHover={{ x: 5 }}
+                        className="bg-white/5 border border-white/10 p-8 rounded-[40px] flex gap-6 items-center group cursor-pointer"
+                      >
+                         <div className="w-32 h-32 rounded-3xl overflow-hidden flex-shrink-0">
+                            <img src={item.thumb} className="w-full h-full object-cover opacity-60" />
+                         </div>
+                         <div className="flex-1">
+                            <span className="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2 block">{item.tag}</span>
+                            <h4 className="text-xl font-black text-white leading-tight mb-2 group-hover:text-blue-400 transition-colors">{item.title}</h4>
+                            <p className="text-xs text-slate-400 line-clamp-2 font-medium">{item.desc}</p>
+                            <button className="mt-4 text-[10px] font-black text-slate-500 group-hover:text-white flex items-center gap-2 uppercase">Explorar Detalhes <ArrowRight className="w-3 h-3"/></button>
+                         </div>
+                      </motion.div>
+                   ))}
+                </section>
+
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="detail"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="min-h-full bg-[#030712] relative"
+            >
+              {/* DETAIL CONTENT */}
+              <div className="max-w-7xl mx-auto p-12 lg:p-20">
+                 <button 
+                  onClick={() => setView("home")}
+                  className="mb-12 flex items-center gap-2 text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
+                 >
+                    <ChevronRight className="w-4 h-4 rotate-180" /> Voltar para Exploração
+                 </button>
+
+                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                    <div className="lg:col-span-7 space-y-10">
+                       <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                             <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-blue-400 uppercase tracking-widest">{selectedItem?.category}</span>
+                             <span className="text-slate-500 text-xs font-bold">• EVIDÊNCIA: {selectedItem?.evidence || "Científica"}</span>
+                          </div>
+                          <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none">{selectedItem?.title}</h2>
+                          <p className="text-xl text-slate-400 font-medium leading-relaxed italic border-l-4 border-blue-500 pl-6">{selectedItem?.subtitle || selectedItem?.desc}</p>
+                       </div>
+
+                       <div className="aspect-video bg-[#0f1523] rounded-[40px] border border-white/5 overflow-hidden group relative flex items-center justify-center">
+                          <img src={selectedItem?.thumb} className="absolute inset-0 w-full h-full object-cover blur-sm opacity-20" />
+                          {selectedItem?.type === 'video' || selectedItem?.type === 'course' ? (
+                            <div className="relative z-10 w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center shadow-3xl cursor-pointer hover:scale-110 transition-transform">
+                               <Play className="w-10 h-10 text-white fill-current translate-x-1" />
+                            </div>
+                          ) : (
+                            <div className="relative z-10 text-center space-y-4 p-8">
+                               <FileText className="w-16 h-16 text-blue-500 mx-auto mb-6" />
+                               <h3 className="text-2xl font-black text-white">Documento Científico</h3>
+                               <p className="text-sm text-slate-400 max-w-sm">Este estudo está disponível para leitura técnica resumida via Inteligência Artificial.</p>
+                               <button className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 mx-auto">
+                                  <ExternalLink className="w-4 h-4" /> Acessar via PubMed
+                               </button>
+                            </div>
+                          )}
+                       </div>
+
+                       <div className="bg-white/5 p-10 rounded-[40px] border border-white/5 space-y-8">
+                          <h4 className="text-xl font-black text-white flex items-center gap-3"><Zap className="w-5 h-5 text-amber-500"/> Aplicação Prática em Consultório</h4>
+                          <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                            Baseado nesta evidência, o protocolo clínico deve ser ajustado para pacientes com perfil metabólico X. Recomenda-se a inclusão de biomarcadores de estresse celular antes da prescrição de dietas restritivas.
+                          </p>
+                          <div className="grid grid-cols-2 gap-6">
+                             <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                                <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Dose Recomendada</span>
+                                <span className="text-sm font-bold text-white italic">Ajuste Customizado</span>
+                             </div>
+                             <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                                <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Impacto Esperado</span>
+                                <span className="text-sm font-bold text-white italic">Alta Renovação</span>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="lg:col-span-5 space-y-10">
+                       {/* AI PERSPECTIVE BOX */}
+                       <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/10 border border-indigo-500/20 p-10 rounded-[48px] shadow-2xl relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+                             <Brain className="w-16 h-16 text-indigo-400" />
+                          </div>
+                          <h4 className="text-2xl font-black text-white italic tracking-tighter mb-4 flex items-center gap-3">
+                             Perspectiva da IA
+                          </h4>
+                          {isAiLoading ? (
+                             <div className="py-12 space-y-4">
+                                <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+                                <div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse" />
+                                <div className="h-4 bg-white/5 rounded-full w-5/6 animate-pulse" />
+                             </div>
+                          ) : (
+                             <div className="space-y-6">
+                                <div className="space-y-2">
+                                   <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Resumo Neural</span>
+                                   <p className="text-xs text-slate-300 leading-relaxed italic font-medium">"{aiAnalysis?.original_summary || "Analisando contexto técnico para gerar o resumo mais preciso para sua prática clínica."}"</p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3">
+                                   <button 
+                                      onClick={handleExplainAI}
+                                      className="w-full py-4 bg-white text-[#030712] rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
+                                   >
+                                      <Brain className="w-4 h-4" /> Explicar com IA Profissional
+                                   </button>
+                                   <button className="w-full py-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2">
+                                      <FileText className="w-4 h-4" /> Gerar Plano de Aula
+                                   </button>
+                                </div>
+                             </div>
+                          )}
+                       </div>
+
+                       {/* SIDEBAR WIDGETS */}
+                       <div className="bg-[#0f1523] p-10 rounded-[48px] border border-white/5">
+                          <h5 className="text-[11px] font-black text-slate-500 mb-6 uppercase tracking-[0.2em] flex items-center gap-2 px-2"><Maximize2 className="w-4 h-4" /> Estudos Relacionados</h5>
+                          <div className="space-y-6">
+                             {trends.slice(0, 3).map((t) => (
+                               <div key={t.id} className="group cursor-pointer flex gap-4 items-center">
+                                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-white/5">
+                                     <img src={t.thumb} className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                  <div className="flex-1">
+                                     <h6 className="text-xs font-black text-white line-clamp-2 leading-tight group-hover:text-blue-400 transition-colors uppercase tracking-tight">{t.title}</h6>
+                                     <span className="text-[9px] font-bold text-slate-600 uppercase mt-1 block">Fonte: PubMed Central</span>
+                                  </div>
+                               </div>
+                             ))}
+                          </div>
+                          <button className="w-full mt-10 py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Explorar Conexões</button>
+                       </div>
+                    </div>
                  </div>
               </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer Compliance */}
-      <div className="bg-[#0f1520] border-t border-white/5 p-4 text-[10px] font-bold text-slate-600 flex justify-between items-center uppercase tracking-[0.1em]">
-         <div className="flex gap-6">
-            <span className="flex items-center gap-1.5 font-black text-amber-500/50"><Sparkles className="w-3 h-3"/> Fontes: NCBI, FDA, Nobel Prize Org</span>
-         </div>
-         <div className="opacity-40">ONNutrition Bio-Science Hub — v3.0.0</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* 🧠 AI SIDEBAR PANEL */}
+      <AnimatePresence>
+        {showAIPanel && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAIPanel(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            />
+            <motion.div 
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 w-[450px] h-full bg-[#030712] border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-[101] p-10 flex flex-col pt-20 overflow-y-auto custom-scrollbar"
+            >
+              <button 
+                onClick={() => setShowAIPanel(false)}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-4 mb-10">
+                 <div className="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 scale-110">
+                    <Brain className="w-8 h-8 text-white" />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black text-white italic tracking-tighter">Co-Piloto Lab</h3>
+                    <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest">Neural Analysis Engine</p>
+                 </div>
+              </div>
+
+              <div className="space-y-10">
+                 <div className="space-y-4">
+                    <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Selecione o Modo de Análise</h5>
+                    <div className="grid grid-cols-3 gap-2">
+                       {["Simples", "Técnico", "Clínico"].map((m) => (
+                         <button key={m} className={`py-2 px-3 rounded-lg text-[9px] font-black uppercase border transition-all ${m === 'Técnico' ? 'bg-purple-500 border-transparent text-white' : 'border-white/10 text-slate-500'}`}>
+                            {m}
+                         </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[40px] space-y-6">
+                    <div className="space-y-2">
+                       <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2"><Star className="w-4 h-4"/> 5 Pontos Chave para Aplicar</span>
+                       <ul className="space-y-4 pt-4">
+                          {[
+                            "Ativação de vias AMPK via nutrição controlada.",
+                            "Monitoramento de uréia e creatinina em protocolos longos.",
+                            "Uso de polifenóis específicos como co-fatores.",
+                            "Sincronização circadiana do maior aporte proteico.",
+                            "Janela metabólica ideal para sinalização de reparo."
+                          ].map((text, i) => (
+                             <li key={i} className="flex gap-3 text-xs text-slate-400 font-medium leading-relaxed">
+                                <span className="text-emerald-500 font-bold">{i+1}.</span> {text}
+                             </li>
+                          ))}
+                       </ul>
+                    </div>
+                 </div>
+
+                 <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-8 rounded-[40px] border border-blue-500/20">
+                    <h5 className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-4">Sugestão de Plano de Aula</h5>
+                    <p className="text-xs text-slate-400 font-medium italic mb-6 leading-relaxed">"O Co-Piloto sugere criar um módulo de 45 min dividindo entre base fisiológica e 3 estudos de caso reais."</p>
+                    <button className="w-full py-3 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl">Baixar Estrutura de Aula</button>
+                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 🏷️ FOOTER STATUS */}
+      <footer className="z-50 bg-[#030712] border-t border-white/5 p-4 py-2 flex justify-between items-center px-8 text-[9px] font-black text-slate-600 uppercase tracking-widest">
+         <div className="flex items-center gap-6">
+            <span className="flex items-center gap-1.5 text-blue-500/50"><Search className="w-3 h-3"/> Engine: PubMed E-Utilities</span>
+            <span className="flex items-center gap-1.5 text-purple-500/50"><Brain className="w-3 h-3"/> Brain: Gemini 1.5 Pro</span>
+         </div>
+         <div className="flex items-center gap-4">
+            <span className="opacity-40">Bio-Science Hub v4.1.2</span>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+         </div>
+      </footer>
     </div>
   );
 }
