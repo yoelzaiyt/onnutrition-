@@ -26,7 +26,8 @@ import {
   Star,
   Activity as ActivityIcon
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { addDocument } from "@/app/lib/supabase-utils";
 
 // --- Interfaces ---
 interface AnamnesisData {
@@ -155,7 +156,7 @@ const steps = [
   { id: 11, title: 'Observações', icon: FileText },
 ];
 
-import { addDocument } from "@/app/lib/supabase-utils";
+
 
 export default function AnamnesisWizard({ patientId, onSave, onBack }: { patientId: string, onSave?: (data: AnamnesisData) => void, onBack?: () => void }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -228,7 +229,7 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
         patient_id: patientId,
         nutri_id: "7a2b2c3d-1a2b-3c4d-5e6f-7g8h9i0j1k2l", // Fallback nutri id
         data: data,
-        score: calculateScore(),
+        score: calculateScore(data),
       });
       
       if (error) throw error;
@@ -263,45 +264,47 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
     }
   };
 
-  const calculateScore = () => {
+  function calculateScore(anamnesisData: AnamnesisData) {
     let score = 0;
-    if (data.consumo_acucar === 'Baixo') score += 10;
-    if (data.consumo_refri === 'Raramente') score += 10;
-    if (data.refeicoes_dia >= 3 && data.refeicoes_dia <= 6) score += 10;
-    if (data.horas_sono >= 7 && data.horas_sono <= 9) score += 10;
-    if (data.qualidade_sono >= 4) score += 10;
-    if (data.pratica_exercicio) {
-      if (data.frequencia_semanal >= 3) score += 15;
-      if (data.duracao_media >= 45) score += 10;
+    if (anamnesisData.consumo_acucar === 'Baixo') score += 10;
+    if (anamnesisData.consumo_refri === 'Raramente') score += 10;
+    if (anamnesisData.refeicoes_dia >= 3 && anamnesisData.refeicoes_dia <= 6) score += 10;
+    if (anamnesisData.horas_sono >= 7 && anamnesisData.horas_sono <= 9) score += 10;
+    if (anamnesisData.qualidade_sono >= 4) score += 10;
+    if (anamnesisData.pratica_exercicio) {
+      if (anamnesisData.frequencia_semanal >= 3) score += 15;
+      if (anamnesisData.duracao_media >= 45) score += 10;
     }
-    if (data.agua_dia >= 2) score += 15;
-    if (data.nivel_estresse <= 2) score += 10;
+    if (anamnesisData.agua_dia >= 2) score += 15;
+    if (anamnesisData.nivel_estresse <= 2) score += 10;
     return Math.min(score, 100);
-  };
+  }
 
-  const getAIDiagnosis = () => {
+  function getAIDiagnosis(anamnesisData: AnamnesisData) {
     const diagnoses = [];
-    if (data.compulsao) diagnoses.push("Padrão de compulsão alimentar detectado.");
-    if (data.consumo_acucar === 'Alto') diagnoses.push("Alto consumo de açúcar refinado.");
-    if (!data.pratica_exercicio) diagnoses.push("Sedentarismo identificado.");
-    if (data.agua_dia < 1.5) diagnoses.push("Baixa ingestão hídrica.");
-    if (data.nivel_estresse >= 4) diagnoses.push("Nível de estresse elevado, impactando cortisol.");
+    if (anamnesisData.compulsao) diagnoses.push("Padrão de compulsão alimentar detectado.");
+    if (anamnesisData.consumo_acucar === 'Alto') diagnoses.push("Alto consumo de açúcar refinado.");
+    if (!anamnesisData.pratica_exercicio) diagnoses.push("Sedentarismo identificado.");
+    if (anamnesisData.agua_dia < 1.5) diagnoses.push("Baixa ingestão hídrica.");
+    if (anamnesisData.nivel_estresse >= 4) diagnoses.push("Nível de estresse elevado, impactando cortisol.");
     return diagnoses.length > 0 ? diagnoses : ["Paciente com hábitos equilibrados. Focar em otimização."];
-  };
+  }
 
-  const getAlerts = () => {
+  function getAlerts(anamnesisData: AnamnesisData) {
     const alerts = [];
-    if (data.doencas.includes('Diabetes Tipo 2') || data.maior_peso > data.peso_atual * 1.2) {
-      alerts.push({ type: 'danger', msg: 'Risco Metabólico Elevado' });
+    if (anamnesisData.doencas.includes('Diabetes Tipo 2') || anamnesisData.maior_peso > anamnesisData.peso_atual * 1.2) {
+      alerts.push({ type: 'danger', msg: 'Risco Metabólico Elevado' } as { type: 'danger' | 'warning', msg: string });
     }
-    if (data.comprometimento < 3) {
-      alerts.push({ type: 'warning', msg: 'Risco de Baixa Adesão Futura' });
+    if (anamnesisData.comprometimento < 3) {
+      alerts.push({ type: 'warning', msg: 'Risco de Baixa Adesão Futura' } as { type: 'danger' | 'warning', msg: string });
     }
-    if (data.compulsao || data.come_por.includes('Ansiedade')) {
-      alerts.push({ type: 'warning', msg: 'Possível Transtorno Alimentar' });
+    if (anamnesisData.compulsao || anamnesisData.come_por.includes('Ansiedade')) {
+      alerts.push({ type: 'warning', msg: 'Possível Transtorno Alimentar' } as { type: 'danger' | 'warning', msg: string });
     }
     return alerts;
-  };
+  }
+
+
 
   const renderStep = () => {
     switch (currentStep) {
@@ -433,9 +436,9 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
   };
 
   if (showSummary) {
-    const score = calculateScore();
-    const diagnoses = getAIDiagnosis();
-    const alerts = getAlerts();
+    const score = calculateScore(data);
+    const diagnoses = getAIDiagnosis(data);
+    const alerts = getAlerts(data);
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 max-w-5xl mx-auto space-y-10 bg-[#0a0f16] min-h-[600px] text-slate-200">

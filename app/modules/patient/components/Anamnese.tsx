@@ -8,6 +8,7 @@ import {
   subscribeToTable 
 } from "@/app/lib/supabase-utils";
 import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Trash2,
@@ -39,7 +40,8 @@ import {
   Zap,
   TrendingUp,
   History,
-  Info
+  Info,
+  Shield
 } from "lucide-react";
 
 // --- Interfaces ---
