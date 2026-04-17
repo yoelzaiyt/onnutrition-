@@ -164,18 +164,18 @@ const patientModules: ModuleCard[] = [
 
 const professionalModules: ModuleCard[] = [
   {
+    id: "cursos",
+    label: "CURSOS & CIÊNCIA",
+    icon: Sparkles,
+    description: "Hub Científico de Elite (Netflix Style)",
+    color: "amber",
+  },
+  {
     id: "professional",
     label: "Profissional",
     icon: Award,
     description: "Biblioteca, Cursos, IA",
     color: "violet",
-  },
-  {
-    id: "cursos",
-    label: "CIÊNCIA & NOBEL",
-    icon: Sparkles,
-    description: "Hub Científico de Elite (Netflix Style)",
-    color: "amber",
   },
   {
     id: "pregnancy",
@@ -244,7 +244,7 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
 };
 
 export default function PatientProfilePage() {
-  const [activeTab, setActiveTab] = useState<string>("anamnese");
+  const [activeTab, setActiveTab] = useState<string>("cursos");
   const [history, setHistory] = useState<string[]>([]);
   const [patientId] = useState("patient-1");
   const { user } = useFirebase();

@@ -239,7 +239,8 @@ export default function Anamnese({
               onSave={handleSaveWizard} 
               onBack={() => setViewMode("tools")} 
             />
-         ) : (
+          </div>
+        ) : (
           <div className="space-y-12 max-w-6xl mx-auto py-4">
             {/* Status Card Unificado */}
             <motion.div 
@@ -344,8 +345,6 @@ export default function Anamnese({
               </AnimatePresence>
             </div>
           </div>
-        )
-   </div>
         )}
       </main>
 

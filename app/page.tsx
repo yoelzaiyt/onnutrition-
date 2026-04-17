@@ -28,59 +28,21 @@ export type AppView =
   | "landing"
   | "login"
   | "register"
-  | "dashboard"
-  | "patients"
-  | "diary"
-  | "recipes"
-  | "medical"
-  | "setup"
-  | "flow"
-  | "anamnesis"
-  | "calendar"
-  | "finance"
-  | "data"
-  | "children"
-  | "generate-data"
   | "education"
-  | "patient-profile";
+  | "setup";
 
 const VIEW_LABELS: Record<AppView, string> = {
   landing: "",
   login: "",
   register: "",
-  dashboard: "Consultório",
-  patients: "Gestão de Pacientes",
-  diary: "Diário Inteligente",
-  recipes: "Biblioteca",
-  medical: "Prontuários",
-  flow: "Fluxo de Pacientes",
-  anamnesis: "Anamnese Geral",
-  calendar: "Agenda & Consultas",
-  finance: "Financeiro & Cobranças",
+  education: "Science Hub",
   setup: "Configurações",
-  data: "Importar / Exportar",
-  children: "Módulo Infantil",
-  "generate-data": "Gerar Dados de Teste",
-  "patient-profile": "Profissional (Nutricionista)",
-  education: "Educação",
 };
 
-const FULL_WIDTH_VIEWS: AppView[] = [
-  "patients",
-  "anamnesis",
-  "medical",
-  "flow",
-  "diary",
-  "recipes",
-  "setup",
-  "data",
-  "children",
-  "patient-profile",
-  "education",
-];
+const FULL_WIDTH_VIEWS: AppView[] = ["education", "setup"];
 
 export default function Home() {
-  const [view, setView] = useState<AppView>("landing");
+  const [view, setView] = useState<AppView>("education");
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -282,56 +244,8 @@ export default function Home() {
               )}
 
               {/* Route rendering */}
-              {view === "dashboard" && (
-                <NutritionistDashboard
-                  user={user}
-                  setView={(v) => setView(v as AppView)}
-                />
-              )}
-              {view === "patients" && (
-                <PatientManagement
-                  nutriId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-              {view === "diary" && (
-                <FoodDiaryPage
-                  patientId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-              {view === "recipes" && (
-                <RecipeLibrary
-                  patientId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-              {view === "medical" && (
-                <MedicalRecord
-                  patientId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-              {view === "flow" && (
-                <PatientFlowManager
-                  nutriId={user?.id || "demo-nutri-id"}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-              {view === "anamnesis" && <PatientProfilePage />}
-              {view === "calendar" && <Calendar />}
-              {view === "finance" && <FinancialModule />}
-              {view === "setup" && (
-                <SetupGuide onBack={() => setView("dashboard")} />
-              )}
-              {view === "data" && (
-                <DataImportExport nutriId={user?.id || "demo-nutri-id"} />
-              )}
-              {view === "generate-data" && (
-                <TestDataGenerator nutriId={user?.id || "demo-nutri-id"} />
-              )}
-              {view === "patient-profile" && <PatientProfilePage />}
               {view === "education" && <PatientProfilePage />}
+              {view === "setup" && <SetupGuide onBack={() => setView("education")} />}
             </motion.div>
           </AnimatePresence>
         </div>
