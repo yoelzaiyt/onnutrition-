@@ -155,10 +155,13 @@ const steps = [
   { id: 11, title: 'Observações', icon: FileText },
 ];
 
+import { addDocument } from "@/app/lib/supabase-utils";
+
 export default function AnamnesisWizard({ patientId, onSave, onBack }: { patientId: string, onSave?: (data: AnamnesisData) => void, onBack?: () => void }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<AnamnesisData>(initialData);
   const [showSummary, setShowSummary] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const populateMockData = () => {
     setData({
@@ -218,6 +221,26 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
     setShowSummary(true);
   };
 
+  const handleFinalSave = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await addDocument("anamnesis_records", {
+        patient_id: patientId,
+        nutri_id: "7a2b2c3d-1a2b-3c4d-5e6f-7g8h9i0j1k2l", // Fallback nutri id
+        data: data,
+        score: calculateScore(),
+      });
+      
+      if (error) throw error;
+      
+      if (onSave) onSave(data);
+    } catch (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const updateData = (updates: Partial<AnamnesisData>) => {
     setData(prev => ({ ...prev, ...updates }));
   };
@@ -225,8 +248,10 @@ export default function AnamnesisWizard({ patientId, onSave, onBack }: { patient
   const nextStep = () => {
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
-    } else {
+    } else if (!showSummary) {
       setShowSummary(true);
+    } else {
+      handleFinalSave();
     }
   };
 

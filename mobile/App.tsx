@@ -1,668 +1,499 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ScrollView, 
+  ActivityIndicator, 
+  Alert,
+  Dimensions,
+  SafeAreaView,
+  StatusBar as RNStatusBar
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { createClient } from '@supabase/supabase-js';
+
+// --- Supabase Config ---
+// Substituir pelas chaves reais do projeto
+const SUPABASE_URL = 'https://wyxyqghxtfvmkpanrdhe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_zMA__WPLO2EAtL62vfm50g_a67P62Au';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const { width } = Dimensions.get('window');
 
 const COLORS = {
+  background: '#0a0f16',
+  surface: '#0f1520',
   primary: '#22B391',
-  primaryDark: '#1C9A7D',
-  background: '#0B2B24',
-  surface: '#FFFFFF',
-  text: '#0B2B24',
-  textLight: '#64748B',
-  textWhite: '#FFFFFF',
+  secondary: '#45dcb9',
+  text: '#f8fafc',
+  textMuted: '#94a3b8',
+  danger: '#ef4444',
+  border: 'rgba(255,255,255,0.05)',
 };
 
-interface Meal {
-  id: string;
-  name: string;
-  time: string;
-  status: string;
-  calories: number;
-  foods: { name: string; quantity: number; unit: string; calories: number }[];
-}
-
 export default function App() {
-  const [screen, setScreen] = useState<'login' | 'dashboard' | 'diet' | 'goals' | 'chat'>('login');
+  const [screen, setScreen] = useState<'login' | 'dashboard' | 'diet' | 'chat'>('login');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  const [todayCalories, setTodayCalories] = useState(1250);
-  const targetCalories = 1800;
-  
-  const [meals, setMeals] = useState<Meal[]>([
-    { id: '1', name: 'Café da Manhã', time: '07:00', status: 'completed', calories: 420, foods: [{ name: 'Ovos mexidos', quantity: 2, unit: 'un', calories: 210 }, { name: 'Pão integral', quantity: 1, unit: 'fatia', calories: 80 }] },
-    { id: '2', name: 'Lanche da Manhã', time: '10:00', status: 'completed', calories: 180, foods: [{ name: 'Iogurte natural', quantity: 150, unit: 'g', calories: 90 }] },
-    { id: '3', name: 'Almoço', time: '12:30', status: 'pending', calories: 650, foods: [{ name: 'Frango grelhado', quantity: 150, unit: 'g', calories: 165 }, { name: 'Arroz integral', quantity: 100, unit: 'g', calories: 110 }] },
-    { id: '4', name: 'Lanche da Tarde', time: '16:00', status: 'pending', calories: 200, foods: [{ name: 'Maçã', quantity: 1, unit: 'un', calories: 95 }] },
-    { id: '5', name: 'Jantar', time: '19:30', status: 'pending', calories: 350, foods: [{ name: 'Peixe assado', quantity: 150, unit: 'g', calories: 135 }] },
-  ]);
+  const [user, setUser] = useState<any>(null);
+  const [patientData, setPatientData] = useState<any>(null);
 
-  const [goals] = useState([
-    { id: '1', title: 'Perder 5kg', current: 3, target: 5, unit: 'kg', deadline: '30/04/2026' },
-    { id: '2', title: 'Beber 2L de água', current: 1500, target: 2000, unit: 'ml', deadline: 'Contínuo' },
-    { id: '3', title: 'Malhar 3x/semana', current: 2, target: 3, unit: 'vezes', deadline: 'Semanal' },
-  ]);
-
-  const [messages, setMessages] = useState([
-    { id: '1', text: 'Olá! Como você está se sentindo com a dieta?', sender: 'nutri', time: '09:00' },
-    { id: '2', text: 'Olá! Estão indo bem, mas tenho sentido fome à tarde.', sender: 'patient', time: '09:15' },
-    { id: '3', text: 'Entendo. Que tal adicionar um lanche às 15h?', sender: 'nutri', time: '09:20' },
-  ]);
-  const [newMessage, setNewMessage] = useState('');
-
+  // --- Auth Handlers ---
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erro', 'Preencha email e senha');
+      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setScreen('dashboard');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+      Alert.alert('Erro de Acesso', error.message);
       setLoading(false);
-    }, 1000);
+      return;
+    }
+
+    setUser(data.user);
+    fetchPatientData(data.user.id);
   };
 
-  const handleDemo = () => {
-    setLoading(true);
-    setTimeout(() => {
+  const fetchPatientData = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*, diet_plans(*, meals(*, meal_foods(*)))')
+      .eq('id', userId) // Assumindo que o patient_id é o mesmo que o user_id no auth
+      .single();
+
+    if (data) {
+      setPatientData(data);
       setScreen('dashboard');
-      setLoading(false);
-    }, 1000);
+    } else {
+      // Demo fallback if no real patient linked yet
+      setScreen('dashboard');
+    }
+    setLoading(false);
   };
-
-  const toggleMealStatus = (mealId: string) => {
-    setMeals(meals.map(meal => {
-      if (meal.id === mealId) {
-        const newStatus = meal.status === 'completed' ? 'pending' : 'completed';
-        setTodayCalories(prev => newStatus === 'completed' ? prev + meal.calories : prev - meal.calories);
-        return { ...meal, status: newStatus };
-      }
-      return meal;
-    }));
-  };
-
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
-    setMessages([...messages, { id: Date.now().toString(), text: newMessage, sender: 'patient', time: 'Agora' }]);
-    setNewMessage('');
-  };
-
-  const progress = (todayCalories / targetCalories) * 100;
 
   if (screen === 'login') {
     return (
-      <View style={styles.container}>
+      <View style={styles.loginContainer}>
         <StatusBar style="light" />
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>ON</Text>
-          <Text style={styles.logoSubText}>NUTRITION</Text>
-        </View>
-        <Text style={styles.title}>Bem-vindo!</Text>
-        <Text style={styles.subtitle}>Acesse sua conta para continuar</Text>
-        
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor={COLORS.textLight}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholderTextColor={COLORS.textLight}
-          />
-          
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        <View style={styles.loginCard}>
+          <View style={styles.logoCircle}>
+             <Text style={styles.logoText}>ON</Text>
+          </View>
+          <Text style={styles.loginTitle}>Acesso Vitalício</Text>
+          <Text style={styles.loginSubtitle}>Sua nutrição premium em qualquer lugar</Text>
+
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email profissional ou paciente"
+              placeholderTextColor={COLORS.textMuted}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha de acesso"
+              placeholderTextColor={COLORS.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
             {loading ? (
-              <ActivityIndicator color={COLORS.textWhite} />
+              <ActivityIndicator color={COLORS.background} />
             ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
+              <Text style={styles.loginButtonText}>ENTRAR AGORA</Text>
             )}
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.demoButton} onPress={handleDemo}>
-            <Text style={styles.demoButtonText}>Entrar com Demo</Text>
+
+          <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Entre em contato com seu nutricionista para obter as credenciais.')}>
+            <Text style={styles.forgotText}>Esqueceu sua senha?</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  const renderScreen = () => {
-    switch (screen) {
-      case 'dashboard':
-        return (
-          <ScrollView style={styles.screen}>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Olá, Paciente!</Text>
-              <Text style={styles.headerSubtitle}>{email || 'Demo User'}</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Calorias de Hoje</Text>
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
-                </View>
-                <Text style={styles.progressText}>{todayCalories} / {targetCalories} kcal</Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>Refeições</Text>
-            {meals.map((meal) => (
-              <TouchableOpacity key={meal.id} style={styles.mealCard}>
-                <View style={styles.mealInfo}>
-                  <Text style={styles.mealName}>{meal.name}</Text>
-                  <Text style={styles.mealTime}>{meal.time}</Text>
-                </View>
-                <View style={styles.mealActions}>
-                  <Text style={styles.mealCalories}>{meal.calories} kcal</Text>
-                  <TouchableOpacity
-                    style={[styles.mealStatus, meal.status === 'completed' && styles.mealStatusDone]}
-                    onPress={() => toggleMealStatus(meal.id)}
-                  >
-                    <Text style={[styles.mealStatusText, meal.status === 'completed' && styles.mealStatusTextDone]}>
-                      {meal.status === 'completed' ? '✓' : '○'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            <View style={styles.statsRow}>
-              <View style={[styles.statCard, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.statValue}>120g</Text>
-                <Text style={styles.statLabel}>Proteína</Text>
-              </View>
-              <View style={[styles.statCard, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.statValue}>180g</Text>
-                <Text style={styles.statLabel}>Carbos</Text>
-              </View>
-            </View>
-          </ScrollView>
-        );
-
-      case 'diet':
-        return (
-          <ScrollView style={styles.screen}>
-            <View style={styles.dietHeader}>
-              <Text style={styles.dietTitle}>Plano Emagrecimento</Text>
-              <Text style={styles.dietTarget}>{targetCalories} kcal/dia</Text>
-            </View>
-            {meals.map((meal) => (
-              <View key={meal.id} style={styles.dietMealCard}>
-                <View style={styles.dietMealHeader}>
-                  <Text style={styles.dietMealName}>{meal.name}</Text>
-                  <Text style={styles.dietMealTime}>{meal.time}</Text>
-                </View>
-                {meal.foods.map((food, idx) => (
-                  <View key={idx} style={styles.dietFoodRow}>
-                    <Text style={styles.dietFoodName}>{food.name}</Text>
-                    <Text style={styles.dietFoodInfo}>{food.quantity}{food.unit} • {food.calories} kcal</Text>
-                  </View>
-                ))}
-              </View>
-            ))}
-          </ScrollView>
-        );
-
-      case 'goals':
-        return (
-          <ScrollView style={styles.screen}>
-            <Text style={styles.goalsTitle}>Suas Metas</Text>
-            {goals.map((goal) => (
-              <View key={goal.id} style={styles.goalCard}>
-                <View style={styles.goalHeader}>
-                  <Text style={styles.goalTitle}>{goal.title}</Text>
-                  <Text style={styles.goalDeadline}>{goal.deadline}</Text>
-                </View>
-                <View style={styles.goalProgress}>
-                  <View style={styles.goalProgressBar}>
-                    <View style={[styles.goalProgressFill, { width: `${(goal.current / goal.target) * 100}%` }]} />
-                  </View>
-                  <Text style={styles.goalProgressText}>{goal.current} / {goal.target} {goal.unit}</Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        );
-
-      case 'chat':
-        return (
-          <View style={styles.chatScreen}>
-            <ScrollView style={styles.chatMessages}>
-              {messages.map((msg) => (
-                <View key={msg.id} style={[styles.message, msg.sender === 'patient' ? styles.messageSent : styles.messageReceived]}>
-                  <Text style={[styles.messageText, msg.sender === 'patient' && styles.messageTextSent]}>{msg.text}</Text>
-                  <Text style={styles.messageTime}>{msg.time}</Text>
-                </View>
-              ))}
-            </ScrollView>
-            <View style={styles.chatInput}>
-              <TextInput
-                style={styles.chatInputField}
-                placeholder="Digite sua mensagem..."
-                value={newMessage}
-                onChangeText={setNewMessage}
-                placeholderTextColor={COLORS.textLight}
-              />
-              <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                <Text style={styles.sendButtonText}>➤</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
-    <View style={styles.mainContainer}>
+    <SafeAreaView style={styles.mainContainer}>
       <StatusBar style="light" />
-      <View style={styles.screenContainer}>{renderScreen()}</View>
-      <View style={styles.tabBar}>
-        {[
-          { id: 'dashboard', label: '🏠', screen: 'Início' },
-          { id: 'diet', label: '🍽️', screen: 'Dieta' },
-          { id: 'goals', label: '🎯', screen: 'Metas' },
-          { id: 'chat', label: '💬', screen: 'Chat' },
-        ].map((tab) => (
-          <TouchableOpacity key={tab.id} style={styles.tab} onPress={() => setScreen(tab.id as any)}>
-            <Text style={styles.tabLabel}>{tab.label}</Text>
-            <Text style={[styles.tabText, screen === tab.id && styles.tabTextActive]}>{tab.screen}</Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.welcomeText}>Olá, Paciente</Text>
+          <Text style={styles.headerName}>{user?.email || 'Demo'}</Text>
+        </View>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.headerIconCircle}>
+            <Text style={{color: COLORS.secondary}}>🔔</Text>
           </TouchableOpacity>
-        ))}
+        </View>
       </View>
-    </View>
+
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Progress Card */}
+        <View style={styles.premiumCard}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Meta Diária de Calorias</Text>
+            <Text style={styles.cardBadge}>PROTEIN+</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: '70%' }]} />
+          </View>
+          <View style={styles.progressStats}>
+            <Text style={styles.progressLabel}>1.250 / 1.800 kcal</Text>
+            <Text style={styles.progressPercent}>70%</Text>
+          </View>
+        </View>
+
+        {/* Quick Stats */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>84.5</Text>
+            <Text style={styles.statLab}>Peso (kg)</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={[styles.statVal, {color: '#60a5fa'}]}>1.5L</Text>
+            <Text style={styles.statLab}>Água</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={[styles.statVal, {color: '#f472b6'}]}>120g</Text>
+            <Text style={styles.statLab}>Proteína</Text>
+          </View>
+        </View>
+
+        {/* Next Meals */}
+        <Text style={styles.sectionTitle}>Refeições Próximas</Text>
+        <TouchableOpacity style={styles.mealRow}>
+          <View style={styles.mealIcon}>
+             <Text style={{fontSize: 20}}>🍽️</Text>
+          </View>
+          <View style={styles.mealInfo}>
+             <Text style={styles.mealName}>Almoço de Sábado</Text>
+             <Text style={styles.mealTime}>12:30 • Arroz, Frango e Salada</Text>
+          </View>
+          <Text style={styles.mealKcal}>540 kcal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.mealRow}>
+          <View style={styles.mealIcon}>
+             <Text style={{fontSize: 20}}>🍎</Text>
+          </View>
+          <View style={styles.mealInfo}>
+             <Text style={styles.mealName}>Lanche da Tarde</Text>
+             <Text style={styles.mealTime}>16:00 • Maçã e Iogurte</Text>
+          </View>
+          <Text style={styles.mealKcal}>100 kcal</Text>
+        </TouchableOpacity>
+
+        <View style={{height: 100}} />
+      </ScrollView>
+
+      {/* Tab Bar Premium */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setScreen('dashboard')}>
+          <Text style={[styles.tabIcon, screen === 'dashboard' && styles.tabIconActive]}>🏠</Text>
+          <Text style={[styles.tabText, screen === 'dashboard' && styles.tabTextActive]}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setScreen('diet')}>
+          <Text style={[styles.tabIcon, screen === 'diet' && styles.tabIconActive]}>🍽️</Text>
+          <Text style={[styles.tabText, screen === 'diet' && styles.tabTextActive]}>Dieta</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setScreen('chat')}>
+          <Text style={[styles.tabIcon, screen === 'chat' && styles.tabIconActive]}>💬</Text>
+          <Text style={[styles.tabText, screen === 'chat' && styles.tabTextActive]}>Chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => supabase.auth.signOut().then(() => setScreen('login'))}>
+          <Text style={styles.tabIcon}>👤</Text>
+          <Text style={styles.tabText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loginContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
     justifyContent: 'center',
-    padding: 24,
-  },
-  logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    padding: 30,
+  },
+  loginCard: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
-    marginBottom: 32,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   logoText: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '900',
-    color: COLORS.primary,
+    color: '#fff',
   },
-  logoSubText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.textWhite,
-    marginLeft: 4,
-  },
-  title: {
+  loginTitle: {
     fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.textWhite,
-    textAlign: 'center',
+    fontWeight: '900',
+    color: COLORS.text,
+    marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#94A3B8',
+  loginSubtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 32,
+    marginBottom: 40,
   },
-  form: {
-    gap: 16,
+  inputGroup: {
+    width: '100%',
+    gap: 15,
+    marginBottom: 30,
   },
   input: {
-    backgroundColor: '#1E3D36',
-    borderRadius: 12,
-    padding: 16,
-    color: COLORS.textWhite,
+    backgroundColor: COLORS.surface,
+    borderRadius: 15,
+    padding: 20,
+    color: COLORS.text,
     fontSize: 16,
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: COLORS.textWhite,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  demoButton: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.border,
   },
-  demoButtonText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: '600',
+  loginButton: {
+    backgroundColor: COLORS.primary,
+    width: '100%',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: '#0a0f16',
+    fontWeight: '900',
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+  forgotText: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    marginTop: 20,
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  screenContainer: {
-    flex: 1,
-  },
-  screen: {
-    flex: 1,
-    padding: 16,
+    backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 25,
+    paddingTop: 10,
+  },
+  welcomeText: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    fontWeight: '600',
+  },
+  headerName: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.text,
+    marginTop: 2,
+  },
+  headerIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  scrollContent: {
+    flex: 1,
+    paddingHorizontal: 25,
+  },
+  premiumCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 30,
+    padding: 25,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     marginBottom: 20,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORS.textLight,
-  },
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 20,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
   cardTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textLight,
-    marginBottom: 12,
+    fontWeight: '800',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  progressContainer: {
-    gap: 8,
+  cardBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 30,
+    fontSize: 10,
+    fontWeight: '900',
+    backgroundColor: 'rgba(34,179,145,0.1)',
+    color: COLORS.secondary,
   },
-  progressBar: {
+  progressBarBg: {
     height: 12,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
     overflow: 'hidden',
+    marginBottom: 15,
   },
-  progressFill: {
+  progressBarFill: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: 6,
+    borderRadius: 10,
   },
-  progressText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  mealCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+  progressStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  progressLabel: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: COLORS.text,
+  },
+  progressPercent: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: COLORS.secondary,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 15,
+    marginBottom: 30,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    padding: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
   },
+  statVal: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: COLORS.primary,
+    marginBottom: 5,
+  },
+  statLab: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: COLORS.text,
+    marginBottom: 20,
+  },
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    padding: 15,
+    borderRadius: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  mealIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
   mealInfo: {
-    gap: 4,
+    flex: 1,
   },
   mealName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.text,
   },
   mealTime: {
     fontSize: 12,
-    color: COLORS.textLight,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
-  mealActions: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  mealCalories: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textLight,
-  },
-  mealStatus: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mealStatusDone: {
-    backgroundColor: COLORS.primary,
-  },
-  mealStatusText: {
-    fontSize: 16,
-    color: COLORS.textLight,
-  },
-  mealStatusTextDone: {
-    color: COLORS.textWhite,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  statCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.primary,
-  },
-  statLabel: {
+  mealKcal: {
+    fontWeight: '900',
+    color: COLORS.text,
     fontSize: 12,
-    color: COLORS.textLight,
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#0f1520',
+    paddingVertical: 15,
+    paddingBottom: 35,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingBottom: 20,
-    paddingTop: 8,
+    borderTopColor: COLORS.border,
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
   },
-  tab: {
+  tabItem: {
     flex: 1,
     alignItems: 'center',
-    padding: 8,
   },
-  tabLabel: {
-    fontSize: 20,
+  tabIcon: {
+    fontSize: 22,
+    color: COLORS.textMuted,
+  },
+  tabIconActive: {
+    color: COLORS.primary,
   },
   tabText: {
     fontSize: 10,
-    color: COLORS.textLight,
-    marginTop: 4,
+    fontWeight: '800',
+    marginTop: 5,
+    color: COLORS.textMuted,
   },
   tabTextActive: {
     color: COLORS.primary,
-    fontWeight: '700',
-  },
-  dietHeader: {
-    marginBottom: 20,
-  },
-  dietTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  dietTarget: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  dietMealCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  dietMealHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  dietMealName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  dietMealTime: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  dietFoodRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  dietFoodName: {
-    fontSize: 14,
-    color: COLORS.textLight,
-  },
-  dietFoodInfo: {
-    fontSize: 14,
-    color: COLORS.textLight,
-  },
-  goalsTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: 20,
-  },
-  goalCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  goalDeadline: {
-    fontSize: 12,
-    color: COLORS.textLight,
-  },
-  goalProgress: {
-    gap: 8,
-  },
-  goalProgressBar: {
-    height: 8,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  goalProgressFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-  },
-  goalProgressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textLight,
-  },
-  chatScreen: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  chatMessages: {
-    flex: 1,
-    padding: 16,
-  },
-  message: {
-    maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
-  messageSent: {
-    backgroundColor: COLORS.primary,
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
-  },
-  messageReceived: {
-    backgroundColor: COLORS.surface,
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
-  },
-  messageText: {
-    fontSize: 14,
-    color: COLORS.text,
-  },
-  messageTextSent: {
-    color: COLORS.textWhite,
-  },
-  messageTime: {
-    fontSize: 10,
-    color: COLORS.textLight,
-    marginTop: 4,
-  },
-  chatInput: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: COLORS.surface,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  chatInputField: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    fontSize: 14,
-  },
-  sendButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: COLORS.primary,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-  },
-  sendButtonText: {
-    fontSize: 20,
-    color: COLORS.textWhite,
   },
 });
