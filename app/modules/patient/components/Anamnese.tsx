@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  addDocument, 
-  getDocuments, 
+import {
+  subscribeToCollection,
+  addDocument,
   deleteDocument,
-  subscribeToTable 
-} from "@/app/lib/supabase-utils";
+} from "@/app/lib/firestore-utils";
 import AnamnesisWizard from "@/app/components/features/AnamnesisWizard";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Trash2,
@@ -36,22 +34,21 @@ import {
   Ruler,
   AlertCircle,
   CheckCircle,
-  Sparkles,
-  Zap,
-  TrendingUp,
-  History,
-  Info,
-  Shield
 } from "lucide-react";
 
-// --- Interfaces ---
 interface WeightRecord {
   id: string;
   date: string;
-  current_weight: number;
-  usual_weight: number;
-  ideal_weight: number;
-  patient_id: string;
+  currentWeight: number;
+  usualWeight: number;
+  idealWeight: number;
+  maxWeight: number;
+  minWeight: number;
+  hasSanfona: boolean;
+  photoFront?: string;
+  photoSide?: string;
+  notes?: string;
+  createdBy: string;
 }
 
 interface ClinicalRecord {
@@ -59,53 +56,98 @@ interface ClinicalRecord {
   date: string;
   condition: string;
   diagnosis?: string;
+  treatment?: string;
+  notes?: string;
+  doctor?: string;
+  createdBy: string;
 }
 
 interface Medication {
   id: string;
   name: string;
   dosage: string;
+  frequency: string;
+  times?: string[];
+  startDate: string;
+  endDate?: string;
   active: boolean;
+  notes?: string;
+  prescribedBy?: string;
+  createdBy: string;
 }
 
 interface EatingHabit {
   id: string;
-  meal_time: string;
+  mealTime: string;
+  mealType: string;
   description: string;
+  calories?: number;
+  notes?: string;
+  createdBy: string;
 }
 
 interface BehaviorRecord {
   id: string;
   date: string;
+  category: string;
   mood: string;
-  stress_level: number;
-  sleep_hours?: number;
+  stressLevel: number;
+  sleepHours?: number;
+  notes?: string;
+  createdBy: string;
 }
 
 interface Exercise {
   id: string;
   name: string;
+  type: string;
   duration: number;
+  intensity: string;
+  calories?: number;
+  heartRate?: number;
   date: string;
+  notes?: string;
+  createdBy: string;
 }
 
 interface HydrationRecord {
   id: string;
   date: string;
-  total_ml: number;
-  goal_ml: number;
+  totalMl: number;
+  waterMl?: number;
+  teaMl?: number;
+  goalMl: number;
+  notes?: string;
+  createdBy: string;
 }
 
 interface Goal {
   id: string;
   title: string;
+  description?: string;
+  targetDate: string;
+  category: string;
   progress: number;
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  weightGoal?: number;
+  createdBy: string;
 }
 
 interface VisualAssessment {
   id: string;
   date: string;
   type: string;
+  description?: string;
+  imageUrl?: string;
+  notes?: string;
+  measurements?: {
+    waist?: number;
+    hip?: number;
+    chest?: number;
+    thighs?: number;
+    arms?: number;
+  };
+  createdBy: string;
 }
 
 type SectionKey =
@@ -119,43 +161,42 @@ type SectionKey =
   | "goals"
   | "visual";
 
-const sections: { id: SectionKey; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "weight", label: "Peso + ON Scan 3D", icon: Scale, color: "text-emerald-400" },
-  { id: "clinical", label: "Histórico Clínico", icon: Stethoscope, color: "text-blue-400" },
-  { id: "medications", label: "Meds & Suplementos", icon: Pill, color: "text-purple-400" },
-  { id: "eating", label: "Hábitos Alimentares", icon: Utensils, color: "text-orange-400" },
-  { id: "behavior", label: "Comportamento", icon: Brain, color: "text-pink-400" },
-  { id: "physical", label: "Atividade Física", icon: Activity, color: "text-cyan-400" },
-  { id: "hydration", label: "Hidratação", icon: Droplets, color: "text-sky-400" },
-  { id: "goals", label: "Objetivos e Metas", icon: Target, color: "text-emerald-500" },
-  { id: "visual", label: "Avaliação Visual", icon: Eye, color: "text-violet-400" },
+const sections: { id: SectionKey; label: string; icon: React.ElementType }[] = [
+  { id: "weight", label: "Peso + ON Scan 3D", icon: Scale },
+  { id: "clinical", label: "Histórico Clínico", icon: Stethoscope },
+  { id: "medications", label: "Meds & Suplementos", icon: Pill },
+  { id: "eating", label: "Hábitos Alimentares", icon: Utensils },
+  { id: "behavior", label: "Comportamento", icon: Brain },
+  { id: "physical", label: "Atividade Física", icon: Activity },
+  { id: "hydration", label: "Hidratação", icon: Droplets },
+  { id: "goals", label: "Objetivos e Metas", icon: Target },
+  { id: "visual", label: "Avaliação Visual", icon: Eye },
 ];
 
 export default function Anamnese({
-  patientId = "7a2b2c3d-1a2b-3c4d-5e6f-7g8h9i0j1k2l", // UUID Example
+  patientId = "patient-1",
 }: {
   patientId?: string;
 }) {
-  const [viewMode, setViewMode] = useState<"wizard" | "tools">("tools");
-  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(new Set([]));
+  const [viewMode, setViewMode] = useState<"wizard" | "tools">("wizard");
+  const [activeSection, setActiveSection] = useState<SectionKey>("weight");
+  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
+    new Set(["weight"]),
+  );
   const [wizardSaved, setWizardSaved] = useState(false);
 
   const handleSaveWizard = async (data: any) => {
+    // Salvar o AnamnesisWizard inteiro no perfil do paciente
     try {
-      const { error } = await addDocument("anamnesis_records", {
-        patient_id: patientId,
-        nutri_id: "7a2b2c3d-1a2b-3c4d-5e6f-7g8h9i0j1k2l", // Fallback
-        data: data,
-        score: data.score || 0,
+      await addDocument(`patients/${patientId}/anamnesis_wizard_data`, {
+        patientId,
+        date: new Date().toISOString(),
+        ...data,
       });
-      
-      if (!error) {
-        setWizardSaved(true);
-        setTimeout(() => setWizardSaved(false), 3000);
-      }
+      setWizardSaved(true);
+      setTimeout(() => setWizardSaved(false), 3000); // feedback visual rápido
     } catch (error) {
-      console.error("Erro ao salvar wizard no Supabase:", error);
+      console.error("Erro ao salvar wizard:", error);
     }
   };
 
@@ -163,269 +204,1136 @@ export default function Anamnese({
     const newExpanded = new Set(expandedSections);
     if (newExpanded.has(section)) {
       newExpanded.delete(section);
-      if (activeSection === section) setActiveSection(null);
     } else {
       newExpanded.add(section);
-      setActiveSection(section);
     }
     setExpandedSections(newExpanded);
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden font-sans text-slate-200 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,179,145,0.05)_0%,transparent_50%)] pointer-events-none" />
-      
-      {/* Header Premium - "Console de Comando" */}
-      <div className="relative border-b border-white/5 bg-[#0f1520]/80 backdrop-blur-xl p-8 overflow-hidden z-20">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#22B391] rounded-full blur-[120px] opacity-10 mix-blend-screen pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-6">
-            <motion.div 
-              initial={{ rotate: -10, scale: 0.9 }}
-              animate={{ rotate: 0, scale: 1 }}
-              className="w-16 h-16 bg-gradient-to-br from-[#22B391] to-[#125c4a] rounded-[22px] flex items-center justify-center shadow-[0_10px_30px_rgba(34,179,145,0.3)] border border-white/20"
-            >
-              <Stethoscope className="w-8 h-8 text-white" />
-            </motion.div>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-2xl font-black tracking-tighter text-white">ANAMNESE CLÍNICA</h2>
-                <span className="px-3 py-1 rounded-full text-[10px] uppercase font-black bg-[#22B391]/10 text-[#45dcb9] border border-[#22B391]/20">Pro Engine v3.0</span>
-              </div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 text-[#22B391]" /> Interface Sinérgica de Diagnóstico
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex bg-black/40 p-1.5 rounded-[20px] border border-white/5 shadow-2xl backdrop-blur-md">
-            <button
-              onClick={() => setViewMode("wizard")}
-              className={`flex items-center gap-2 px-6 py-3 text-[11px] font-black rounded-Xl transition-all uppercase tracking-widest ${
-                viewMode === "wizard"
-                  ? "bg-[#22B391] text-[#0a0f16] shadow-xl shadow-[#22B391]/20"
-                  : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              <Zap className="w-4 h-4" /> Fluxo Guiado
-            </button>
-            <button
-              onClick={() => setViewMode("tools")}
-              className={`flex items-center gap-2 px-6 py-3 text-[11px] font-black rounded-Xl transition-all uppercase tracking-widest ${
-                viewMode === "tools"
-                  ? "bg-[#22B391] text-[#0a0f16] shadow-xl shadow-[#22B391]/20"
-                  : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              <Activity className="w-4 h-4" /> Painel Geral
-            </button>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Botões de Módulo */}
+      <div className="flex bg-gray-100 p-1 rounded-xl">
+        <button
+          onClick={() => setViewMode("wizard")}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+            viewMode === "wizard"
+              ? "bg-white text-[#22B391] shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Assistente Inteligente (Wizard IA)
+        </button>
+        <button
+          onClick={() => setViewMode("tools")}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+            viewMode === "tools"
+              ? "bg-white text-[#22B391] shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Ferramentas Individuais (Consultas Pontuais)
+        </button>
       </div>
 
       {wizardSaved && (
-        <div className="m-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-          <CheckCircle className="w-5 h-5" />
-          <span className="text-sm font-bold">Anamnese unificada salva no Supabase com sucesso!</span>
+        <div className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-green-500" />
+          <span className="text-sm font-medium">Anamnese Avançada salva com sucesso no perfil!</span>
         </div>
       )}
 
-      {/* Main Container */}
-      <main className="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar">
-        {viewMode === "wizard" ? (
-          <div className="bg-[#0f1520] rounded-[32px] overflow-hidden border border-white/5 p-1 animate-in fade-in zoom-in-95 duration-500">
-            <AnamnesisWizard 
-              patientId={patientId} 
-              onSave={handleSaveWizard} 
-              onBack={() => setViewMode("tools")} 
-            />
+      {viewMode === "wizard" ? (
+        <div className="bg-white rounded-[32px] overflow-hidden border border-gray-200 p-4">
+          <AnamnesisWizard 
+            patientId={patientId} 
+            onSave={handleSaveWizard} 
+            onBack={() => setViewMode("tools")} 
+          />
+        </div>
+      ) : (
+        <>
+          <div className="bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4 rounded-xl mb-6">
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              📋 ANAMNESE BÁSICA E CONTROLE DIÁRIO
+            </h3>
+            <p className="text-white/70 text-sm">
+              ⭐ Preenchimento focado com histórico de evolução pontual ⭐
+            </p>
           </div>
-        ) : (
-          <div className="space-y-12 max-w-6xl mx-auto py-4">
-            {/* Status Card Unificado */}
-            <motion.div 
-               initial={{ opacity: 0, y: 30 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="relative group bg-gradient-to-br from-[#111827] to-[#0a0f16] p-8 rounded-[40px] border border-white/5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-            >
-               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-[#22B391] rounded-full blur-[100px] opacity-10 pointer-events-none" />
-               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[24px] bg-[#22B391]/10 flex items-center justify-center border border-[#22B391]/20">
-                       <Shield className="w-8 h-8 text-[#45dcb9]" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-black text-white italic tracking-tight mb-1">Ecossistema ONN Sincronizado</h3>
-                      <p className="text-sm text-slate-400 font-medium">O paciente visualiza estas atualizações em tempo real no app móvel.</p>
-                    </div>
+
+          <div className="space-y-2">
+            {sections.map((section) => (
+              <div
+                key={section.id}
+                className="border border-gray-200 rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className={`w-full flex items-center justify-between p-4 transition-colors ${
+                    activeSection === section.id
+                      ? "bg-[#22B391]/10 text-[#22B391]"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <section.icon className="w-5 h-5" />
+                    <span className="font-medium">{section.label}</span>
                   </div>
-                  <div className="flex gap-4">
-                    <div className="bg-white/5 px-6 py-4 rounded-3xl border border-white/5 text-center">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Última Att</p>
-                      <p className="text-sm font-black text-white">Hoje, 14:30</p>
-                    </div>
-                    <div className="bg-[#22B391]/10 px-6 py-4 rounded-3xl border border-[#22B391]/20 text-center">
-                      <p className="text-[10px] font-black text-[#22B391] uppercase tracking-widest mb-1">Status Sync</p>
-                      <p className="text-sm font-black text-[#45dcb9]">Online</p>
-                    </div>
+                  {expandedSections.has(section.id) ? (
+                    <ChevronDown className="w-5 h-5" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5" />
+                  )}
+                </button>
+
+                {expandedSections.has(section.id) && (
+                  <div className="p-4 border-t border-gray-100 bg-gray-50">
+                    {section.id === "weight" && (
+                      <WeightSection patientId={patientId} />
+                    )}
+                    {section.id === "clinical" && (
+                      <ClinicalSection patientId={patientId} />
+                    )}
+                    {section.id === "medications" && (
+                      <MedicationsSection patientId={patientId} />
+                    )}
+                    {section.id === "eating" && (
+                      <EatingSection patientId={patientId} />
+                    )}
+                    {section.id === "behavior" && (
+                      <BehaviorSection patientId={patientId} />
+                    )}
+                    {section.id === "physical" && (
+                      <PhysicalSection patientId={patientId} />
+                    )}
+                    {section.id === "hydration" && (
+                      <HydrationSection patientId={patientId} />
+                    )}
+                    {section.id === "goals" && (
+                      <GoalsSection patientId={patientId} />
+                    )}
+                    {section.id === "visual" && (
+                      <VisualSection patientId={patientId} />
+                    )}
                   </div>
-               </div>
-            </motion.div>
-
-            {/* Grid de Ferramentas Sinérgicas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence>
-                {sections.map((section, idx) => (
-                  <motion.div
-                    key={section.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ y: -5 }}
-                    onClick={() => toggleSection(section.id)}
-                    className={`relative p-8 rounded-[35px] cursor-pointer transition-all duration-500 group overflow-hidden border ${
-                      activeSection === section.id
-                        ? "bg-gradient-to-br from-[#0f1520] to-[#0a0f16] border-[#22B391]/50 shadow-[0_20px_40px_rgba(34,179,145,0.1)] col-span-1 md:col-span-2 lg:col-span-3"
-                        : "bg-[#0f1520] border-white/5 hover:border-white/20 hover:shadow-2xl"
-                    }`}
-                  >
-                    {/* Background Icon Watermark */}
-                    <section.icon className={`absolute -right-4 -bottom-4 w-32 h-32 opacity-[0.03] rotate-12 transition-all group-hover:opacity-[0.06] group-hover:scale-110 ${section.color}`} />
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-8">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10 group-hover:border-[#22B391]/30 transition-all ${activeSection === section.id ? "bg-[#22B391]/10 border-[#22B391]/30" : ""}`}>
-                          <section.icon className={`w-7 h-7 ${section.color}`} />
-                        </div>
-                        {activeSection === section.id ? (
-                           <button className="p-3 bg-rose-500/10 text-rose-400 rounded-xl hover:bg-rose-500/20 transition-all">
-                              <Trash2 className="w-4 h-4" />
-                           </button>
-                        ) : (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-slate-500 group-hover:bg-[#22B391] group-hover:text-black transition-all">
-                            <ChevronRight className="w-5 h-5" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mb-2">
-                        <h4 className={`text-xl font-black tracking-tighter transition-colors ${activeSection === section.id ? "text-[#45dcb9]" : "text-white group-hover:text-[#45dcb9]"}`}>
-                          {section.label}
-                        </h4>
-                        <p className="text-xs text-slate-500 font-medium">Gestão integrada de dados clínicos e biométricos.</p>
-                      </div>
-
-                      {activeSection === section.id && (
-                        <motion.div 
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="mt-10 pt-10 border-t border-white/5"
-                        >
-                          {section.id === "weight" && <WeightSection patientId={patientId} />}
-                          {section.id === "clinical" && <ClinicalSection patientId={patientId} />}
-                          {section.id === "medications" && <MedicationsSection patientId={patientId} />}
-                          {section.id === "eating" && <EatingSection patientId={patientId} />}
-                          {section.id === "behavior" && <BehaviorSection patientId={patientId} />}
-                          {section.id === "physical" && <PhysicalSection patientId={patientId} />}
-                          {section.id === "hydration" && <HydrationSection patientId={patientId} />}
-                          {section.id === "goals" && <GoalsSection patientId={patientId} />}
-                          {section.id === "visual" && <VisualSection patientId={patientId} />}
-                          
-                          <div className="mt-12 flex justify-end gap-4">
-                             <button onClick={() => setActiveSection(null)} className="px-6 py-3 text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-all">Fechar</button>
-                             <button className="flex items-center gap-2 px-8 py-3 bg-[#22B391] text-[#0a0f16] text-xs font-black rounded-xl uppercase tracking-widest hover:bg-[#1C9A7D] shadow-xl shadow-[#22B391]/20">
-                                <Save className="w-4 h-4" /> Salvar Alterações
-                             </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
-      </main>
-
-      {/* Footer Compliance */}
-      <div className="bg-[#0f1520] border-t border-white/5 p-4 text-[10px] font-bold text-slate-600 flex justify-between items-center uppercase tracking-[0.1em]">
-         <div className="flex gap-6">
-            <span className="flex items-center gap-1.5 font-black text-[#45dcb9]/50"><Info className="w-3 h-3"/> Backend Unificado: Supabase Cloud</span>
-            <span className="flex items-center gap-1.5 opacity-50"><CheckCircle className="w-3 h-3"/> PostgreSQL + RLS</span>
-         </div>
-         <div className="opacity-40">ONNutrition — v2.6.0 (Supabase Engine)</div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
 
-// --- Sub-components (Supabase Powered) ---
+function FileText({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
 
 function WeightSection({ patientId }: { patientId: string }) {
   const [records, setRecords] = useState<WeightRecord[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [currentWeight, setCurrentWeight] = useState("");
   const [usualWeight, setUsualWeight] = useState("");
+  const [idealWeight, setIdealWeight] = useState("");
+  const [showOnScan, setShowOnScan] = useState(false);
 
   useEffect(() => {
-    fetchData();
-    const sub = subscribeToTable("weight_records", fetchData);
-    return () => { sub.unsubscribe(); };
+    const unsubscribe = subscribeToCollection<WeightRecord>(
+      `patients/${patientId}/weight-records`,
+      (data) =>
+        setRecords(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
   }, [patientId]);
-
-  const fetchData = async () => {
-    const { data } = await getDocuments<WeightRecord>("weight_records", { column: "patient_id", value: patientId });
-    if (data) setRecords(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addDocument("weight_records", {
-      patient_id: patientId,
-      current_weight: parseFloat(currentWeight) || 0,
-      usual_weight: parseFloat(usualWeight) || 0,
-      ideal_weight: 75, // Demo
+    await addDocument(`patients/${patientId}/weight-records`, {
+      patientId,
+      date: new Date().toISOString(),
+      currentWeight: parseFloat(currentWeight) || 0,
+      usualWeight: parseFloat(usualWeight) || 0,
+      idealWeight: parseFloat(idealWeight) || 0,
+      maxWeight: 0,
+      minWeight: 0,
+      hasSanfona: false,
     });
-    setCurrentWeight(""); setUsualWeight(""); setIsAdding(false);
-    fetchData();
+    setCurrentWeight("");
+    setUsualWeight("");
+    setIdealWeight("");
+    setIsAdding(false);
   };
 
-  const latest = records[0];
+  const latestRecord = records[0];
 
   return (
-    <div className="space-y-6">
-      <button onClick={() => setIsAdding(!isAdding)} className="bg-[#22B391] text-[#0a0f16] px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Novo Peso</button>
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <button
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700"
+        >
+          <Plus className="w-4 h-4" /> Novo Peso
+        </button>
+        <button
+          onClick={() => setShowOnScan(!showOnScan)}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700"
+        >
+          <Scan className="w-4 h-4" /> ON Scan 3D
+        </button>
+      </div>
+
       {isAdding && (
-        <form onSubmit={handleAdd} className="grid grid-cols-2 gap-4 p-5 bg-[#0f1520] border border-white/5 rounded-[20px]">
-          <input type="number" step="0.1" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} placeholder="Peso Atual" className="bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm" />
-          <input type="number" step="0.1" value={usualWeight} onChange={(e) => setUsualWeight(e.target.value)} placeholder="Peso Habitual" className="bg-[#0a0f16] border border-white/10 rounded-xl p-3 text-white text-sm" />
-          <button type="submit" className="col-span-2 bg-white/5 border border-white/10 py-3 rounded-xl text-xs font-black uppercase">Salvar no Postgres</button>
+        <form
+          onSubmit={handleAdd}
+          className="grid grid-cols-3 gap-3 p-3 bg-white rounded-lg"
+        >
+          <input
+            type="number"
+            step="0.1"
+            value={currentWeight}
+            onChange={(e) => setCurrentWeight(e.target.value)}
+            placeholder="Peso atual (kg)"
+            className="p-2 border rounded-lg text-sm"
+          />
+          <input
+            type="number"
+            step="0.1"
+            value={usualWeight}
+            onChange={(e) => setUsualWeight(e.target.value)}
+            placeholder="Peso habitual"
+            className="p-2 border rounded-lg text-sm"
+          />
+          <input
+            type="number"
+            step="0.1"
+            value={idealWeight}
+            onChange={(e) => setIdealWeight(e.target.value)}
+            placeholder="Peso ideal"
+            className="p-2 border rounded-lg text-sm"
+          />
+          <button
+            type="submit"
+            className="col-span-3 bg-emerald-600 text-white py-2 rounded-lg text-sm"
+          >
+            <Save className="w-4 h-4 inline mr-1" /> Salvar
+          </button>
         </form>
       )}
-      <div className="grid grid-cols-3 gap-4 text-center">
-         <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-            <p className="text-[9px] text-slate-500 uppercase font-black">Peso Atual</p>
-            <p className="text-xl font-black text-white">{latest?.current_weight || "0"} <span className="text-[10px]">KG</span></p>
-         </div>
-         <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-            <p className="text-[9px] text-slate-500 uppercase font-black">Habitual</p>
-            <p className="text-xl font-black text-white">{latest?.usual_weight || "0"} <span className="text-[10px]">KG</span></p>
-         </div>
-         <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-            <p className="text-[9px] text-emerald-500 uppercase font-black">Meta</p>
-            <p className="text-xl font-black text-emerald-400">75.0 <span className="text-[10px]">KG</span></p>
-         </div>
+
+      {showOnScan && (
+        <div className="p-4 bg-indigo-50 rounded-lg">
+          <p className="text-indigo-700 text-sm">
+            Módulo ON Scan 3D seria carregado aqui...
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-blue-50 p-3 rounded-lg text-center">
+          <p className="text-xs text-blue-600">Atual</p>
+          <p className="text-xl font-bold text-blue-700">
+            {latestRecord?.currentWeight ?? "-"}
+          </p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded-lg text-center">
+          <p className="text-xs text-gray-500">Habitual</p>
+          <p className="text-xl font-bold text-gray-700">
+            {latestRecord?.usualWeight ?? "-"}
+          </p>
+        </div>
+        <div className="bg-emerald-50 p-3 rounded-lg text-center">
+          <p className="text-xs text-emerald-600">Ideal</p>
+          <p className="text-xl font-bold text-emerald-700">
+            {latestRecord?.idealWeight ?? "-"}
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-function ClinicalSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via clinical_history.</p>; }
-function MedicationsSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via medications.</p>; }
-function EatingSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via eating_habits.</p>; }
-function BehaviorSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via behavior.</p>; }
-function PhysicalSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via physical_activity.</p>; }
-function HydrationSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via hydration.</p>; }
-function GoalsSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via goals.</p>; }
-function VisualSection({ patientId }: { patientId: string }) { return <p className="text-xs text-slate-500 italic">Módulo sincronizado via visual_assessment.</p>; }
+function ClinicalSection({ patientId }: { patientId: string }) {
+  const [records, setRecords] = useState<ClinicalRecord[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [condition, setCondition] = useState("");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const conditions = [
+    "Hipertensão",
+    "Diabetes",
+    "Dislipidemia",
+    "Obesidade",
+    "Hipotireoidismo",
+    "Outros",
+  ];
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<ClinicalRecord>(
+      `patients/${patientId}/clinical-history`,
+      (data) =>
+        setRecords(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/clinical-history`, {
+      patientId,
+      date: new Date().toISOString(),
+      condition,
+      diagnosis: diagnosis || undefined,
+      notes: notes || undefined,
+    });
+    setCondition("");
+    setDiagnosis("");
+    setNotes("");
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Novo Histórico
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className="w-full p-2 border rounded-lg text-sm"
+          >
+            <option value="">Selecione...</option>
+            {conditions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={diagnosis}
+            onChange={(e) => setDiagnosis(e.target.value)}
+            placeholder="Diagnóstico"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Observações"
+            className="w-full p-2 border rounded-lg text-sm"
+            rows={2}
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {records.slice(0, 3).map((r) => (
+          <div
+            key={r.id}
+            className="flex items-center justify-between p-2 bg-white rounded-lg"
+          >
+            <div>
+              <p className="font-medium text-sm">{r.condition}</p>
+              <p className="text-xs text-gray-500">
+                {new Date(r.date).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MedicationsSection({ patientId }: { patientId: string }) {
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [dosage, setDosage] = useState("");
+  const [frequency, setFrequency] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<Medication>(
+      `patients/${patientId}/medications`,
+      (data) => setMedications(data),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/medications`, {
+      patientId,
+      name,
+      dosage,
+      frequency: frequency || undefined,
+      startDate: new Date().toISOString(),
+      active: true,
+    });
+    setName("");
+    setDosage("");
+    setFrequency("");
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Novo Medicamento
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nome do medicamento"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="text"
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="Dosagem"
+              className="p-2 border rounded-lg text-sm"
+            />
+            <select
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              className="p-2 border rounded-lg text-sm"
+            >
+              <option value="">Frequência</option>
+              <option value="1x/dia">1x/dia</option>
+              <option value="2x/dia">2x/dia</option>
+              <option value="3x/dia">3x/dia</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-purple-600 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="grid grid-cols-1 gap-2">
+        {medications.slice(0, 3).map((med) => (
+          <div
+            key={med.id}
+            className="flex items-center gap-2 p-2 bg-white rounded-lg"
+          >
+            <Pill className="w-4 h-4 text-purple-500" />
+            <div className="flex-1">
+              <p className="font-medium text-sm">{med.name}</p>
+              <p className="text-xs text-gray-500">{med.dosage}</p>
+            </div>
+            {med.active && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Ativo
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EatingSection({ patientId }: { patientId: string }) {
+  const [habits, setHabits] = useState<EatingHabit[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [mealTime, setMealTime] = useState("");
+  const [mealType, setMealType] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<EatingHabit>(
+      `patients/${patientId}/eating-habits`,
+      (data) => setHabits(data),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/eating-habits`, {
+      patientId,
+      mealTime,
+      mealType: mealType || undefined,
+      description,
+    });
+    setMealTime("");
+    setMealType("");
+    setDescription("");
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-orange-500 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Nova Refeição
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={mealTime}
+              onChange={(e) => setMealTime(e.target.value)}
+              className="p-2 border rounded-lg text-sm"
+            >
+              <option value="">Horário</option>
+              {["07:00", "08:00", "12:00", "13:00", "19:00", "20:00"].map(
+                (t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ),
+              )}
+            </select>
+            <select
+              value={mealType}
+              onChange={(e) => setMealType(e.target.value)}
+              className="p-2 border rounded-lg text-sm"
+            >
+              <option value="">Tipo</option>
+              <option value="Café da manhã">Café</option>
+              <option value="Almoço">Almoço</option>
+              <option value="Jantar">Jantar</option>
+              <option value="Lanche">Lanche</option>
+            </select>
+          </div>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Descrição da refeição"
+            className="w-full p-2 border rounded-lg text-sm"
+            rows={2}
+          />
+          <button
+            type="submit"
+            className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-1">
+        {habits.slice(0, 5).map((h) => (
+          <div
+            key={h.id}
+            className="flex items-center gap-2 p-2 bg-white rounded-lg"
+          >
+            <Clock className="w-4 h-4 text-gray-400" />
+            <span className="text-xs text-gray-500 w-12">{h.mealTime}</span>
+            <span className="flex-1 text-sm">{h.description}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BehaviorSection({ patientId }: { patientId: string }) {
+  const [records, setRecords] = useState<BehaviorRecord[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [mood, setMood] = useState("");
+  const [stressLevel, setStressLevel] = useState(5);
+  const [sleepHours, setSleepHours] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<BehaviorRecord>(
+      `patients/${patientId}/behavior`,
+      (data) =>
+        setRecords(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/behavior`, {
+      patientId,
+      date: new Date().toISOString(),
+      category: "Comportamento",
+      mood,
+      stressLevel,
+      sleepHours: sleepHours ? parseFloat(sleepHours) : undefined,
+    });
+    setMood("");
+    setStressLevel(5);
+    setSleepHours("");
+    setIsAdding(false);
+  };
+
+  const latestRecord = records[0];
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-pink-500 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Novo Registro
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <div>
+            <label className="text-xs text-gray-500">Humor</label>
+            <div className="flex gap-1">
+              {["happy", "neutral", "sad", "anxious"].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMood(m)}
+                  className={`flex-1 p-2 rounded-lg text-xs ${mood === m ? "bg-pink-200" : "bg-gray-100"}`}
+                >
+                  {m === "happy" && "😊"}
+                  {m === "neutral" && "😐"}
+                  {m === "sad" && "😢"}
+                  {m === "anxious" && "😰"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">
+              Estresse: {stressLevel}/10
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={stressLevel}
+              onChange={(e) => setStressLevel(parseInt(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <input
+            type="number"
+            step="0.5"
+            value={sleepHours}
+            onChange={(e) => setSleepHours(e.target.value)}
+            placeholder="Horas de sono"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <button
+            type="submit"
+            className="w-full bg-pink-500 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      {latestRecord && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-pink-50 p-2 rounded-lg text-center">
+            <p className="text-xs text-pink-600">Humor</p>
+            <p className="text-lg">
+              {latestRecord.mood === "happy"
+                ? "😊"
+                : latestRecord.mood === "sad"
+                  ? "😢"
+                  : "😐"}
+            </p>
+          </div>
+          <div className="bg-pink-50 p-2 rounded-lg text-center">
+            <p className="text-xs text-pink-600">Estresse</p>
+            <p className="text-lg font-bold">{latestRecord.stressLevel}</p>
+          </div>
+          <div className="bg-pink-50 p-2 rounded-lg text-center">
+            <p className="text-xs text-pink-600">Sono</p>
+            <p className="text-lg font-bold">
+              {latestRecord.sleepHours || "-"}h
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhysicalSection({ patientId }: { patientId: string }) {
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [duration, setDuration] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<Exercise>(
+      `patients/${patientId}/physical-activity`,
+      (data) =>
+        setExercises(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/physical-activity`, {
+      patientId,
+      name,
+      type: type || undefined,
+      duration: parseInt(duration) || 0,
+      date: new Date().toISOString(),
+    });
+    setName("");
+    setType("");
+    setDuration("");
+    setIsAdding(false);
+  };
+
+  const totalMinutes = exercises.reduce((sum, e) => sum + e.duration, 0);
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-cyan-600 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Novo Exercício
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nome do exercício"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="p-2 border rounded-lg text-sm"
+            >
+              <option value="">Tipo</option>
+              <option value="Cardio">Cardio</option>
+              <option value="Força">Força</option>
+              <option value="Yoga">Yoga</option>
+            </select>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="Duração (min)"
+              className="p-2 border rounded-lg text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-cyan-600 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      {exercises.length > 0 && (
+        <div className="flex items-center gap-4 p-3 bg-cyan-50 rounded-lg">
+          <Activity className="w-5 h-5 text-cyan-600" />
+          <span className="text-sm text-cyan-700">
+            Total: <strong>{totalMinutes} min</strong>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HydrationSection({ patientId }: { patientId: string }) {
+  const [records, setRecords] = useState<HydrationRecord[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [waterMl, setWaterMl] = useState("");
+  const [goalMl, setGoalMl] = useState("2500");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<HydrationRecord>(
+      `patients/${patientId}/hydration`,
+      (data) =>
+        setRecords(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const total = parseInt(waterMl) || 0;
+    await addDocument(`patients/${patientId}/hydration`, {
+      patientId,
+      date: new Date().toISOString(),
+      totalMl: total,
+      waterMl: total || undefined,
+      goalMl: parseInt(goalMl) || 2500,
+    });
+    setWaterMl("");
+    setIsAdding(false);
+  };
+
+  const todayRecord = records.find((r) =>
+    r.date.startsWith(new Date().toISOString().split("T")[0]),
+  );
+  const percentage = todayRecord
+    ? Math.round((todayRecord.totalMl / todayRecord.goalMl) * 100)
+    : 0;
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Registrar
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <input
+            type="number"
+            value={waterMl}
+            onChange={(e) => setWaterMl(e.target.value)}
+            placeholder="Quantidade de água (ml)"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <input
+            type="number"
+            value={goalMl}
+            onChange={(e) => setGoalMl(e.target.value)}
+            placeholder="Meta diária (ml)"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
+        <div className="w-12 h-12 relative">
+          <svg className="w-12 h-12 transform -rotate-90">
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              stroke="#e5e7eb"
+              strokeWidth="4"
+              fill="none"
+            />
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              stroke="#3b82f6"
+              strokeWidth="4"
+              fill="none"
+              strokeDasharray={`${percentage * 1.26} 126`}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs font-bold text-blue-600">
+              {percentage}%
+            </span>
+          </div>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-blue-700">
+            {todayRecord?.totalMl || 0} ml
+          </p>
+          <p className="text-xs text-blue-600">Meta: {goalMl} ml</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GoalsSection({ patientId }: { patientId: string }) {
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [targetDate, setTargetDate] = useState("");
+  const [weightGoal, setWeightGoal] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<Goal>(
+      `patients/${patientId}/goals`,
+      (data) => setGoals(data),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addDocument(`patients/${patientId}/goals`, {
+      patientId,
+      title,
+      targetDate: new Date(targetDate).toISOString(),
+      category: "Peso",
+      weightGoal: weightGoal ? parseFloat(weightGoal) : undefined,
+      progress: 0,
+      status: "pending",
+    });
+    setTitle("");
+    setTargetDate("");
+    setWeightGoal("");
+    setIsAdding(false);
+  };
+
+  const activeGoals = goals.filter((g) => g.status !== "completed");
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Nova Meta
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título da meta"
+            className="w-full p-2 border rounded-lg text-sm"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              className="p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="number"
+              step="0.1"
+              value={weightGoal}
+              onChange={(e) => setWeightGoal(e.target.value)}
+              placeholder="Meta de peso"
+              className="p-2 border rounded-lg text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {activeGoals.slice(0, 3).map((goal) => (
+          <div key={goal.id} className="p-2 bg-white rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-sm">{goal.title}</span>
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                {goal.progress}%
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-gray-100 rounded-full mt-1">
+              <div
+                className="h-full bg-emerald-500 rounded-full"
+                style={{ width: `${goal.progress}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VisualSection({ patientId }: { patientId: string }) {
+  const [assessments, setAssessments] = useState<VisualAssessment[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
+  const [waist, setWaist] = useState("");
+  const [hip, setHip] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCollection<VisualAssessment>(
+      `patients/${patientId}/visual-assessment`,
+      (data) =>
+        setAssessments(
+          data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          ),
+        ),
+    );
+    return () => unsubscribe();
+  }, [patientId]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const measurements: any = {};
+    if (waist) measurements.waist = parseFloat(waist);
+    if (hip) measurements.hip = parseFloat(hip);
+
+    await addDocument(`patients/${patientId}/visual-assessment`, {
+      patientId,
+      date: new Date().toISOString(),
+      type,
+      description: description || undefined,
+      measurements:
+        Object.keys(measurements).length > 0 ? measurements : undefined,
+    });
+    setType("");
+    setDescription("");
+    setWaist("");
+    setHip("");
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => setIsAdding(!isAdding)}
+        className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm"
+      >
+        <Plus className="w-4 h-4" /> Nova Avaliação
+      </button>
+
+      {isAdding && (
+        <form
+          onSubmit={handleAdd}
+          className="space-y-2 p-3 bg-white rounded-lg"
+        >
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full p-2 border rounded-lg text-sm"
+          >
+            <option value="">Tipo</option>
+            <option value="Foto Inicial">Foto Inicial</option>
+            <option value="Foto Progresso">Foto Progresso</option>
+            <option value="Medição">Medição Corporal</option>
+          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              value={waist}
+              onChange={(e) => setWaist(e.target.value)}
+              placeholder="Cintura (cm)"
+              className="p-2 border rounded-lg text-sm"
+            />
+            <input
+              type="number"
+              value={hip}
+              onChange={(e) => setHip(e.target.value)}
+              placeholder="Quadril (cm)"
+              className="p-2 border rounded-lg text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm"
+          >
+            Salvar
+          </button>
+        </form>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {assessments.slice(0, 2).map((a) => (
+          <div key={a.id} className="p-2 bg-white rounded-lg">
+            <p className="font-medium text-sm">{a.type}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(a.date).toLocaleDateString("pt-BR")}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

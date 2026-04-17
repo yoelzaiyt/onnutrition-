@@ -26,14 +26,12 @@ import {
   MessageSquare,
   Camera,
   CheckCircle,
+  Edit,
   Plus,
   Settings,
   LogOut,
   Award,
   BookOpen,
-  Shield,
-  Zap,
-  Sparkles
 } from "lucide-react";
 import { useFirebase } from "@/app/components/layout/FirebaseProvider";
 
@@ -164,18 +162,18 @@ const patientModules: ModuleCard[] = [
 
 const professionalModules: ModuleCard[] = [
   {
-    id: "cursos",
-    label: "CURSOS & CIÊNCIA",
-    icon: Sparkles,
-    description: "Hub Científico de Elite (Netflix Style)",
-    color: "amber",
-  },
-  {
     id: "professional",
-    label: "Profissional",
+    label: "Módulo Profissional",
     icon: Award,
     description: "Biblioteca, Cursos, IA",
     color: "violet",
+  },
+  {
+    id: "cursos",
+    label: "CURSOS",
+    icon: BookOpen,
+    description: "Formação, Notícias e Biblioteca",
+    color: "blue",
   },
   {
     id: "pregnancy",
@@ -186,28 +184,28 @@ const professionalModules: ModuleCard[] = [
   },
   {
     id: "energy",
-    label: "Energia",
+    label: "Cálculo de Energia",
     icon: Calculator,
     description: "Gasto energético",
     color: "yellow",
   },
   {
     id: "dietary",
-    label: "Dieta",
+    label: "Prescrição Dietética",
     icon: ScrollText,
     description: "Plano alimentar",
     color: "green",
   },
   {
     id: "lab-exams",
-    label: "Exames",
+    label: "Exames Laboratoriais",
     icon: FlaskConical,
     description: "Resultados de exames",
     color: "amber",
   },
   {
     id: "diagnosis",
-    label: "Evolução",
+    label: "Evolução Diagnóstico",
     icon: TrendingUp,
     description: "Progresso clínico",
     color: "teal",
@@ -243,9 +241,29 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   cursos: EducationModule,
 };
 
+const getColorClasses = (color: string, isBg = false) => {
+  const colors: Record<string, string> = {
+    blue: isBg ? "bg-blue-50" : "text-blue-600",
+    emerald: isBg ? "bg-emerald-50" : "text-emerald-600",
+    red: isBg ? "bg-red-50" : "text-red-600",
+    purple: isBg ? "bg-purple-50" : "text-purple-600",
+    orange: isBg ? "bg-orange-50" : "text-orange-600",
+    pink: isBg ? "bg-pink-50" : "text-pink-600",
+    cyan: isBg ? "bg-cyan-50" : "text-cyan-600",
+    indigo: isBg ? "bg-indigo-50" : "text-indigo-600",
+    slate: isBg ? "bg-slate-50" : "text-slate-600",
+    yellow: isBg ? "bg-yellow-50" : "text-yellow-600",
+    green: isBg ? "bg-green-50" : "text-green-600",
+    amber: isBg ? "bg-amber-50" : "text-amber-600",
+    teal: isBg ? "bg-teal-50" : "text-teal-600",
+  };
+  return colors[color] || colors.blue;
+};
+
 export default function PatientProfilePage() {
-  const [activeTab, setActiveTab] = useState<string>("cursos");
+  const [activeTab, setActiveTab] = useState<string>("anamnese");
   const [history, setHistory] = useState<string[]>([]);
+  const [isEditing, setIsEditing] = useState(true);
   const [patientId] = useState("patient-1");
   const { user } = useFirebase();
 
@@ -271,147 +289,93 @@ export default function PatientProfilePage() {
   const currentModule = allModules.find((m) => m.id === activeTab);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f16] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden text-slate-200 font-sans">
-      
-      {/* High-End Header */}
-      <div className="border-b border-white/5 bg-[#0f1520] p-8 lg:p-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#22B391] rounded-full blur-[150px] opacity-[0.08] mix-blend-screen pointer-events-none" />
-        
-        <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-          <div className="relative group">
-            <div className="w-32 h-32 bg-[#0a0f16] border-2 border-white/10 rounded-[40px] flex items-center justify-center overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:border-[#22B391]/40 transition-all duration-700 ease-out">
-              <User className="w-16 h-16 text-[#22B391]/60" />
+    <div className="flex flex-col h-full bg-white rounded-[32px] shadow-sm border border-gray-200 overflow-hidden">
+      <div className="border-b border-gray-100 bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-6">
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center overflow-hidden">
+              <User className="w-12 h-12 text-white" />
             </div>
-            <button className="absolute -bottom-2 -right-2 w-11 h-11 bg-[#22B391] text-[#0a0f16] rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all">
-              <Camera className="w-5 h-5" />
+            <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors">
+              <Camera className="w-4 h-4 text-[#22B391]" />
             </button>
           </div>
-          
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-               <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-emerald-500 text-[9px] uppercase font-black tracking-[0.2em]">Paciente Ativo</p>
-               </div>
-               <p className="text-white/30 text-[9px] uppercase font-black tracking-[0.2em]">Prontuário Interno #8842</p>
-            </div>
-            <h2 className="text-4xl font-black text-white tracking-tighter sm:text-5xl">
-               {user?.displayName || "Paciente Demo"}
+          <div className="flex-1">
+            <h2 className="text-2xl font-black text-white">
+              {user?.displayName || "Paciente Demo"}
             </h2>
-            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6">
-              <div className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3 group hover:bg-white/10 transition-colors">
-                <Scale className="w-4 h-4 text-emerald-400" />
-                <div>
-                   <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Peso Atual</p>
-                   <p className="text-sm font-black text-white">84.5 <span className="text-[10px] text-white/40">KG</span></p>
-                </div>
-              </div>
-              <div className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3 group hover:bg-white/10 transition-colors">
-                <Zap className="w-4 h-4 text-amber-400" />
-                <div>
-                   <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Metabolismo</p>
-                   <p className="text-sm font-black text-white">1.950 <span className="text-[10px] text-white/40">KCAL</span></p>
-                </div>
-              </div>
-              <div className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3 group hover:bg-white/10 transition-colors">
-                <Sparkles className="w-4 h-4 text-blue-400" />
-                <div>
-                   <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Adesão Dieta</p>
-                   <p className="text-sm font-black text-white">88%</p>
-                </div>
-              </div>
+            <p className="text-white/70 text-sm">
+              Prontuário: #8842 • Cadastrado em 15/03/2024
+            </p>
+            <div className="flex gap-3 mt-3">
+              <span className="px-3 py-1 bg-white/20 rounded-full text-xs text-white font-medium">
+                Ativo
+              </span>
+              <span className="px-3 py-1 bg-white/20 rounded-full text-xs text-white font-medium">
+                Nutricionista: Dra. Ana
+              </span>
             </div>
           </div>
-          
-          <div className="hidden lg:flex flex-col items-center gap-2">
-             <div className="relative w-24 h-24">
-               <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
-                  <circle cx="48" cy="48" r="42" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={264} strokeDashoffset={264 - (264 * 45) / 100} className="text-[#22B391] drop-shadow-[0_0_8px_rgba(34,179,145,0.4)]" strokeLinecap="round" />
-               </svg>
-               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-white">45</span>
-                  <span className="text-[8px] font-black text-white/30 tracking-widest uppercase">Score</span>
-               </div>
-             </div>
-             <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Progresso Total</p>
+          <div className="text-right">
+            <p className="text-white/60 text-xs">Progresso Geral</p>
+            <p className="text-3xl font-black text-white">45%</p>
           </div>
         </div>
       </div>
 
-      {/* Premium Toolbar */}
-      <div className="flex items-center justify-between p-4 px-8 border-b border-white/5 bg-[#0a0f16]/90 backdrop-blur-xl sticky top-0 z-20">
+      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gray-50">
         <button
           onClick={handleGoBack}
           disabled={history.length === 0 && activeTab === "anamnese"}
-          className="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-20 font-black text-[11px] uppercase tracking-[0.2em] text-slate-300"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-30 font-medium text-slate-700"
         >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ChevronLeft className="w-5 h-5" />
           Voltar
         </button>
 
-        <div className="flex items-center gap-4">
-           <div className="w-10 h-10 rounded-xl bg-[#22B391]/10 flex items-center justify-center border border-[#22B391]/20">
-              {currentModule && React.createElement(currentModule.icon, { className: "w-5 h-5 text-[#45dcb9]" })}
-           </div>
-           <div>
-              <p className="text-[9px] text-white/30 uppercase font-black tracking-widest mb-0.5">Módulo Selecionado</p>
-              <h4 className="font-black text-white text-base tracking-tight leading-none uppercase">{currentModule?.label}</h4>
-           </div>
-        </div>
-
-        <div className="flex gap-2">
-           <button className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all text-slate-400 hover:text-white">
-              <Settings className="w-4 h-4" />
-           </button>
-           <button className="p-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-2xl transition-all text-red-500">
-              <LogOut className="w-4 h-4" />
-           </button>
+        <div className="text-right">
+          <span className="text-xs text-gray-500">Módulo:</span>
+          <p className="font-bold text-[#22B391]">{currentModule?.label}</p>
         </div>
       </div>
 
-      {/* Tabs Menu Premium */}
-      <div className="flex gap-3 p-4 px-8 overflow-x-auto bg-[#0a0f16] border-b border-white/5 custom-scrollbar-hide hover:custom-scrollbar scroll-smooth">
+      <div className="flex gap-2 p-3 overflow-x-auto bg-white border-b">
         {allModules.map((module) => (
           <button
             key={module.id}
             onClick={() => handleModuleClick(module.id)}
-            className={`flex items-center gap-3 px-6 py-4 rounded-3xl text-[10px] font-black transition-all whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === module.id
-                ? "bg-[#22B391] text-[#0a0f16] border-transparent shadow-2xl shadow-[#22B391]/20 scale-105 active:scale-95"
-                : "bg-white/5 text-slate-500 border-white/5 hover:bg-white/10 hover:border-white/20 hover:text-slate-300 active:scale-95"
+                ? "bg-[#22B391] text-white shadow-md"
+                : "bg-gray-100 text-slate-700 hover:bg-gray-200"
             }`}
           >
-            <module.icon className={`w-4 h-4 ${activeTab === module.id ? "text-[#0a0f16]" : ""}`} />
-            <span className="uppercase tracking-[0.2em]">{module.label}</span>
+            <module.icon className="w-5 h-5" />
+            <span className="hidden sm:inline">{module.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Module Workspace */}
-      <main className="flex-1 overflow-y-auto p-6 lg:p-10 relative scroll-smooth custom-scrollbar">
-        <div className="max-w-7xl mx-auto h-full animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-           <ActiveComponent patientId={patientId} />
+      <main className="flex-1 overflow-y-auto p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+              {history.length > 0 ? "Voltando..." : "Módulo"}
+            </p>
+            <h2 className="text-xl font-black text-[#0B2B24]">
+              {currentModule?.label || "Dados do Paciente"}
+            </h2>
+          </div>
+          <div className="flex gap-2">
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#22B391]/10 text-[#22B391] rounded-xl text-sm font-bold hover:bg-[#22B391]/20 transition-colors">
+              <Plus className="w-4 h-4" />
+              Adicionar
+            </button>
+          </div>
         </div>
-      </main>
 
-      {/* Compliance Footer */}
-      <div className="bg-[#0f1520] border-t border-white/5 p-5 px-8 text-[10px] font-black text-slate-600 flex justify-between items-center uppercase tracking-[0.2em]">
-         <div className="flex gap-10">
-            <div className="flex items-center gap-2 group cursor-help hover:text-emerald-500 transition-colors">
-               <Shield className="w-3.5 h-3.5 opacity-50"/> 
-               <span>ON Crypt Standard Baseline</span>
-            </div>
-            <div className="flex items-center gap-2 opacity-60">
-               <Activity className="w-3.5 h-3.5"/> 
-               <span>Telemetry: Active Sync</span>
-            </div>
-         </div>
-         <div className="flex items-center gap-2 text-white/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" />
-            ONNutrition Unified Protocol — v2.5.0
-         </div>
-      </div>
+        <ActiveComponent patientId={patientId} />
+      </main>
     </div>
   );
 }

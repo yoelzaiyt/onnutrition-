@@ -30,10 +30,40 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "education", label: "EXPLORAÇÃO", icon: LayoutDashboard },
-  { id: "education", label: "MEUS CURSOS", icon: GraduationCap },
-  { id: "education", label: "PESQUISA IA", icon: Sparkles },
-  { id: "setup", label: "CONFIGURAÇÕES", icon: Settings },
+  { id: "dashboard", label: "Consultório", icon: LayoutDashboard },
+  { id: "calendar", label: "Agenda", icon: Calendar },
+  {
+    id: "patients",
+    label: "Pacientes",
+    icon: Users,
+    children: [
+      { id: "patients", label: "Todos os Pacientes" },
+      { id: "flow", label: "Fluxo de Atendimento" },
+      { id: "anamnesis", label: "Anamnese" },
+      { id: "medical", label: "Prontuários" },
+    ],
+  },
+  { id: "finance", label: "Financeiro", icon: DollarSign },
+  {
+    id: "diary",
+    label: "Ferramentas",
+    icon: Utensils,
+    children: [
+      { id: "diary", label: "Diário Alimentar" },
+      { id: "recipes", label: "Biblioteca de Receitas" },
+    ],
+  },
+  { id: "data", label: "Dados", icon: FileSpreadsheet },
+  {
+    id: "patient-profile",
+    label: "CURSOS",
+    icon: GraduationCap,
+    children: [
+      { id: "patient-profile", label: "Profissional (Nutricionista)" },
+    ],
+  },
+  { id: "generate-data", label: "Teste", icon: Sparkles },
+  { id: "setup", label: "Configurações", icon: Settings },
 ];
 
 interface TopNavProps {
@@ -99,7 +129,7 @@ const TopNav: React.FC<TopNavProps> = ({
   return (
     <nav
       ref={navRef}
-      className="bg-[#030712] border-b border-white/5 px-6 py-0 flex items-center justify-between sticky top-0 z-50 shadow-2xl h-16"
+      className="bg-white border-b border-slate-100 px-6 py-0 flex items-center justify-between sticky top-0 z-50 shadow-sm h-16"
     >
       {/* Logo */}
       <div className="flex items-center gap-10">
@@ -111,10 +141,10 @@ const TopNav: React.FC<TopNavProps> = ({
             <div key={item.id} className="relative">
               <button
                 onClick={() => handleNavClick(item)}
-                className={`flex items-center gap-1.5 px-4 py-5 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                className={`flex items-center gap-1.5 px-4 py-5 text-[13px] font-bold transition-all border-b-2 ${
                   isActive(item)
-                    ? "text-blue-400 border-blue-400"
-                    : "text-slate-500 border-transparent hover:text-white hover:border-white/10"
+                    ? "text-[#22B391] border-[#22B391]"
+                    : "text-slate-500 border-transparent hover:text-[#22B391] hover:border-[#22B391]/30"
                 }`}
               >
                 {item.label}
@@ -151,23 +181,23 @@ const TopNav: React.FC<TopNavProps> = ({
 
       {/* Right Side — User + Logout */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2.5 px-4 py-2 bg-white/5 rounded-xl border border-white/10 cursor-default">
-          <div className="w-7 h-7 bg-blue-500 rounded-lg flex items-center justify-center text-white font-black text-xs">
+        <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 cursor-default">
+          <div className="w-7 h-7 bg-[#22B391] rounded-lg flex items-center justify-center text-white font-black text-xs">
             {user?.user_metadata?.full_name?.charAt(0) ||
               user?.email?.charAt(0)?.toUpperCase() ||
               "U"}
           </div>
           <div className="hidden md:block">
-            <p className="text-xs font-black text-white truncate max-w-[120px]">
+            <p className="text-xs font-black text-slate-900 truncate max-w-[120px]">
               {user?.user_metadata?.full_name ||
                 user?.email?.split("@")[0] ||
-                "Especialista"}
+                "Usuário"}
             </p>
             <button
               onClick={() =>
                 onSwitchRole(userRole === "patient" ? "nutri" : "patient")
               }
-              className="text-[9px] text-blue-400 font-bold uppercase tracking-widest hover:underline flex items-center gap-1"
+              className="text-[10px] text-[#22B391] font-medium hover:underline flex items-center gap-1"
             >
               {userRole === "patient"
                 ? "Mudar para Nutri"
