@@ -247,7 +247,7 @@ const areas = [
 ];
 
 export default function ProfessionalModule() {
-  const [activeTab, setActiveTab] = useState("scientific");
+  const [activeTab, setActiveTab] = useState("courses");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterArea, setFilterArea] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
@@ -256,12 +256,9 @@ export default function ProfessionalModule() {
   const [showRequestAuth, setShowRequestAuth] = useState(false);
 
   const tabs = [
+    { id: "courses", label: "CURSOS / EDUCAÇÃO", icon: GraduationCap },
     { id: "scientific", label: "Atualização Científica", icon: BookOpen },
     { id: "library", label: "Biblioteca", icon: Search },
-    { id: "courses", label: "Criação de Cursos", icon: GraduationCap },
-    { id: "content", label: "Conteúdos", icon: Video },
-    { id: "testimonials", label: "Depoimentos", icon: MessageSquare },
-    { id: "ai", label: "IA Profissional", icon: Brain },
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   ];
 
@@ -785,21 +782,21 @@ export default function ProfessionalModule() {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-[32px] shadow-sm border border-gray-200 overflow-hidden">
-      <div className="border-b border-gray-100 bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-white">
-              Módulo Profissional
-            </h2>
-            <p className="text-xs text-white/70">
-              Atualização • Biblioteca • Cursos • Conteúdos • IA
-            </p>
+<div className="border-b border-gray-100 bg-gradient-to-r from-[#0B2B24] to-[#22B391] p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-white">
+                CURSOS / EDUCAÇÃO
+              </h2>
+              <p className="text-xs text-white/70">
+                Formación científica y profesional
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
       <div className="flex border-b border-gray-100 overflow-x-auto">
         {tabs.map((tab) => (

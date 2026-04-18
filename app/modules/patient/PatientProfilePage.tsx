@@ -167,13 +167,6 @@ const patientModules: ModuleCard[] = [
 
 const professionalModules: ModuleCard[] = [
   {
-    id: "professional",
-    label: "Módulo Profissional",
-    icon: Award,
-    description: "Biblioteca, Cursos, IA",
-    color: "violet",
-  },
-  {
     id: "cursos",
     label: "CURSOS / EDUCAÇÃO",
     icon: BookOpen,
@@ -230,35 +223,14 @@ const professionalModules: ModuleCard[] = [
     color: "indigo",
   },
   {
-    id: "anthropometry",
+    id: "antropometria",
     label: "Antropometria",
     icon: Scale,
     description: "Medidas corporais",
     color: "emerald",
   },
   {
-    id: "pregnancy",
-    label: "Gestantes",
-    icon: Baby,
-    description: "Acompanhamento gestacional",
-    color: "pink",
-  },
-  {
-    id: "energy",
-    label: "Cálculo Energético",
-    icon: Calculator,
-    description: "Gasto energético",
-    color: "yellow",
-  },
-  {
-    id: "dietary",
-    label: "Prescrição Dietética",
-    icon: ScrollText,
-    description: "Plano alimentar",
-    color: "green",
-  },
-  {
-    id: "goals",
+    id: "metas",
     label: "Metas",
     icon: Target,
     description: "Objetivos do paciente",
@@ -310,14 +282,15 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   chat: PatientChat,
   files: PatientFiles,
   finance: PatientFinance,
-  anthropometry: Anthropometry,
+  antropometria: Anthropometry,
   "body-scan": BodyScan3D,
-  professional: ProfessionalModule,
-  cursos: EducationModule,
+  profissional: ProfessionalModule,
+  cursos: ProfessionalModule,
   questionnaire: HealthQuestionnaire,
   compounded: CompoundedPrescription,
   products: ProductList,
   "patient-documents": PatientDocuments,
+  metas: GoalsPrescription,
 };
 
 const getColorClasses = (color: string, isBg = false) => {
