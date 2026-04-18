@@ -338,6 +338,9 @@ export default function Home() {
               )}
               {view === "patient-profile" && <PatientProfilePage />}
               {view === "education" && <PatientProfilePage />}
+              {view === "children" && (
+                <ChildModule parentId={user?.id || "demo-parent"} nutritionistId={user?.id} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
