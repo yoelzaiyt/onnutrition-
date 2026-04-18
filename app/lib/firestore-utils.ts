@@ -51,7 +51,7 @@ export function subscribeToCollection<T = any>(
   if (queryConstraints) {
     queryConstraints.forEach((constraint: any) => {
       if (constraint.field && constraint.operator && constraint.value) {
-        query = query.eq(constraint.field, constraint.value);
+        query = (query as any).eq(constraint.field, constraint.value);
       }
     });
   }

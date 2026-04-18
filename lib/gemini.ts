@@ -1,22 +1,21 @@
-import { HarmBlockThreshold, HarmCategory } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 const MODEL = 'gemini-1.5-flash-latest';
 
-let cachedClient: any = null;
+let cachedClient: ReturnType<GoogleGenAI['models']['generateContent']> | null = null;
+let cachedGenAI: GoogleGenAI | null = null;
 
-const getClient = (): any => {
+const getClient = (): GoogleGenAI | null => {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!apiKey || apiKey === 'SUA_CHAVE_GEMINI_AQUI') {
     console.warn('[Gemini] API key not configured — returning null');
     return null;
   }
-  if (cachedClient) return cachedClient;
-  
+  if (cachedGenAI) return cachedGenAI;
+
   try {
-    const { ChatSession, GenerateContentResponse, GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    cachedClient = genAI.getGenerativeModel({ model: MODEL });
-    return cachedClient;
+    cachedGenAI = new GoogleGenAI({ apiKey });
+    return cachedGenAI;
   } catch (err) {
     console.error('[Gemini] Failed to initialize:', err);
     return null;
@@ -25,15 +24,18 @@ const getClient = (): any => {
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 async function generateContent(prompt: string): Promise<any> {
-  const client = getClient();
-  if (!client) {
+  const genAI = getClient();
+  if (!genAI) {
     throw new Error('Gemini API key not configured');
   }
 
   try {
-    const result = await client.generateContent(prompt);
-    const text = result.response.text();
-    
+    const response = await genAI.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+    });
+    const text = response.text ?? '';
+
     const match = text.match(/\{[\s\S]*\}/);
     return JSON.parse(match ? match[0] : '{}');
   } catch (err) {
