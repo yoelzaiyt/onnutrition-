@@ -20,6 +20,7 @@ import Calendar from "@/app/components/ui/Calendar";
 import TopNav from "@/app/components/layout/TopNav";
 import DataImportExport from "@/app/components/features/DataImportExport";
 import TestDataGenerator from "@/app/components/features/TestDataGenerator";
+import Nutriflix from "@/app/components/features/Nutriflix";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { LogOut } from "lucide-react";
@@ -43,7 +44,8 @@ export type AppView =
   | "children"
   | "generate-data"
   | "education"
-  | "patient-profile";
+  | "patient-profile"
+  | "nutriflix";
 
 const VIEW_LABELS: Record<AppView, string> = {
   landing: "",
@@ -64,6 +66,7 @@ const VIEW_LABELS: Record<AppView, string> = {
   "generate-data": "Gerar Dados de Teste",
   "patient-profile": "Profissional (Nutricionista)",
   education: "Educação",
+  nutriflix: "Nutriflix",
 };
 
 const FULL_WIDTH_VIEWS: AppView[] = [
@@ -340,6 +343,9 @@ export default function Home() {
               {view === "education" && <PatientProfilePage />}
               {view === "children" && (
                 <ChildModule parentId={user?.id || "demo-parent"} nutritionistId={user?.id} />
+              )}
+              {view === "nutriflix" && (
+                <Nutriflix user={user} />
               )}
             </motion.div>
           </AnimatePresence>

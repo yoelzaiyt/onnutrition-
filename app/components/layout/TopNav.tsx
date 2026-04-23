@@ -18,6 +18,7 @@ import {
   Sparkles,
   GraduationCap,
   QrCode,
+  Play,
 } from "lucide-react";
 import Logo from "@/app/components/ui/Logo";
 import type { AppView } from "@/app/page";
@@ -53,6 +54,7 @@ const NAV_ITEMS: NavItem[] = [
       { id: "recipes", label: "Biblioteca de Receitas" },
     ],
   },
+  { id: "nutriflix", label: "Nutriflix", icon: Play },
   { id: "data", label: "Dados", icon: FileSpreadsheet },
   {
     id: "patient-profile",

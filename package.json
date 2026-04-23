@@ -12,6 +12,7 @@
     "clean": "next clean"
   },
   "dependencies": {
+    "chromadb": "^1.8.1",
     "@google/genai": "^1.17.0",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.99.2",
