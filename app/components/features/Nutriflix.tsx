@@ -7,7 +7,7 @@ import {
   TrendingUp, Lightbulb, ArrowRight, CheckCircle, BarChart2,
   Globe, Award, Target, Zap
 } from 'lucide-react';
-import { getNutriflixData, saveContent, searchNutriflix, NutríFlixContent } from '@/app/lib/nutriflixService';
+import { getNutriflixData, saveContent, searchNutriflix, NutriFlixContent } from '@/app/lib/nutriflixService';
 import { toast } from 'react-hot-toast';
 
 interface NutriflixProps {
@@ -47,13 +47,13 @@ export default function Nutriflix({ user, onNavigate }: NutriflixProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<NutríFlixContent[]>([]);
+  const [searchResults, setSearchResults] = useState<NutriFlixContent[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<NutríFlixContent | null>(null);
+  const [selectedContent, setSelectedContent] = useState<NutriFlixContent | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -208,7 +208,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
             </div>
           </div>
           <div className="space-y-4">
-            {sideNews.map((news: NutríFlixContent) => (
+            {sideNews.map((news: NutriFlixContent) => (
               <div 
                 key={news.id}
                 className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/30 hover:border-emerald-500/30 cursor-pointer transition-all hover:bg-slate-800"
@@ -244,7 +244,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.videos.map((video: NutríFlixContent) => (
+          {data.videos.map((video: NutriFlixContent) => (
             <div 
               key={video.id}
               className="group relative bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/30 hover:border-rose-500/30 cursor-pointer transition-all hover:bg-slate-800"
@@ -286,7 +286,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           </button>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-          {data.courses.map((course: NutríFlixContent) => (
+          {data.courses.map((course: NutriFlixContent) => (
             <div 
               key={course.id}
               className="flex-shrink-0 w-72 group relative bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/30 hover:border-amber-500/30 cursor-pointer transition-all"
@@ -337,7 +337,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.studies.map((study: NutríFlixContent) => (
+          {data.studies.map((study: NutriFlixContent) => (
             <div 
               key={study.id}
               className="p-5 bg-slate-800/50 rounded-xl border border-slate-700/30 hover:border-violet-500/30 cursor-pointer transition-all hover:bg-slate-800"
@@ -371,7 +371,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           Insights & Tendências
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.insights.map((insight: NutríFlixContent) => (
+          {data.insights.map((insight: NutriFlixContent) => (
             <div 
               key={insight.id}
               className="p-5 bg-gradient-to-r from-cyan-500/10 to-slate-800/50 rounded-xl border border-cyan-500/20 hover:border-cyan-500/40 cursor-pointer transition-all"
@@ -408,7 +408,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           Continue Aprendendo
         </h2>
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-          {data.continueLearning.map((course: NutríFlixContent) => (
+          {data.continueLearning.map((course: NutriFlixContent) => (
             <div 
               key={course.id}
               className="flex-shrink-0 w-64 p-4 bg-slate-800/50 rounded-xl border border-slate-700/30 cursor-pointer hover:border-blue-500/30 transition-all"
@@ -442,7 +442,7 @@ Quer que eu detalhe algum desses pontos ou responda algo específico?`);
           Recomendado para Você
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.recommended.map((item: NutríFlixContent) => (
+          {data.recommended.map((item: NutriFlixContent) => (
             <div 
               key={item.id}
               className="flex gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700/30 cursor-pointer hover:border-pink-500/30 transition-all"
