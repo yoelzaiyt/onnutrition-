@@ -4,7 +4,9 @@
       "Bash(git push *)",
       "Bash(npx vercel *)",
       "Bash(supabase *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(vercel *)"
     ]
   }
 }

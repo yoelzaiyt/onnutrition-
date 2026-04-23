@@ -21,6 +21,7 @@ import TopNav from "@/app/components/layout/TopNav";
 import DataImportExport from "@/app/components/features/DataImportExport";
 import TestDataGenerator from "@/app/components/features/TestDataGenerator";
 import Nutriflix from "@/app/components/features/Nutriflix";
+import Education from "@/app/components/features/Education";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { LogOut } from "lucide-react";
@@ -340,7 +341,7 @@ export default function Home() {
                 <TestDataGenerator nutriId={user?.id || "demo-nutri-id"} />
               )}
               {view === "patient-profile" && <PatientProfilePage />}
-              {view === "education" && <PatientProfilePage />}
+              {view === "education" && <Education user={user} />}
               {view === "children" && (
                 <ChildModule parentId={user?.id || "demo-parent"} nutritionistId={user?.id} />
               )}
