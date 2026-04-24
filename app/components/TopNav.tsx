@@ -19,7 +19,7 @@ const TopNav: React.FC<TopNavProps> = ({ activeView, setView, user, onLogout }) 
     { id: 'patients', label: 'Pacientes', hasDropdown: true },
     { id: 'finance', label: 'Financeiro', hasDropdown: false },
     { id: 'anamnesis', label: 'Anamnese', hasDropdown: true },
-    { id: 'recipes', label: 'Estudos', hasDropdown: true },
+    { id: 'courses', label: 'Cursos & Formação', hasDropdown: false },
     { id: 'marketing', label: 'Marketing', hasDropdown: true },
     { id: 'video', label: 'Videoch', hasDropdown: false },
   ];

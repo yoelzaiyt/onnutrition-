@@ -22,6 +22,7 @@ import DataImportExport from "@/app/components/features/DataImportExport";
 import TestDataGenerator from "@/app/components/features/TestDataGenerator";
 import Nutriflix from "@/app/components/features/Nutriflix";
 import Education from "@/app/components/features/Education";
+import CoursesPage from "@/app/modules/courses/page";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { LogOut } from "lucide-react";
@@ -46,7 +47,8 @@ export type AppView =
   | "generate-data"
   | "education"
   | "patient-profile"
-  | "nutriflix";
+  | "nutriflix"
+  | "courses";
 
 const VIEW_LABELS: Record<AppView, string> = {
   landing: "",
@@ -68,6 +70,7 @@ const VIEW_LABELS: Record<AppView, string> = {
   "patient-profile": "Profissional (Nutricionista)",
   education: "Educação",
   nutriflix: "Nutriflix",
+  courses: "Cursos & Formação",
 };
 
 const FULL_WIDTH_VIEWS: AppView[] = [
@@ -82,6 +85,7 @@ const FULL_WIDTH_VIEWS: AppView[] = [
   "children",
   "patient-profile",
   "education",
+  "courses",
 ];
 
 export default function Home() {
@@ -348,6 +352,7 @@ export default function Home() {
               {view === "nutriflix" && (
                 <Nutriflix user={user} />
               )}
+              {view === "courses" && <CoursesPage />}
             </motion.div>
           </AnimatePresence>
         </div>

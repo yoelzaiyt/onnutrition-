@@ -167,13 +167,6 @@ const patientModules: ModuleCard[] = [
 
 const professionalModules: ModuleCard[] = [
   {
-    id: "cursos",
-    label: "CURSOS / EDUCAÇÃO",
-    icon: BookOpen,
-    description: "Formação científica e profissional",
-    color: "blue",
-  },
-  {
     id: "pregnancy",
     label: "Gestante",
     icon: Baby,
@@ -285,7 +278,6 @@ const componentMap: Record<string, React.FC<{ patientId?: string }>> = {
   antropometria: Anthropometry,
   "body-scan": BodyScan3D,
   profissional: ProfessionalModule,
-  cursos: ProfessionalModule,
   questionnaire: HealthQuestionnaire,
   compounded: CompoundedPrescription,
   products: ProductList,

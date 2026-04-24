@@ -1,4 +1,5 @@
 import { isGeminiConfigured, generateDietPlan } from '@/lib/gemini';
+import multiAiOrchestrator, { edamamProvider, usdaProvider, offProvider, hfProvider } from '@/lib/multiAiService';
 
 const MOCK_DIET_PLAN = {
   meals: [
@@ -87,7 +88,7 @@ async function safeGenerateDietPlan(params: Parameters<typeof generateDietPlan>[
     console.log('[AI Service] Gemini não configurado. Usando dados mock.');
     return MOCK_DIET_PLAN;
   }
-  
+
   try {
     return await generateDietPlan(params);
   } catch (error) {
@@ -106,24 +107,28 @@ export const aiService = {
     preferences?: string;
     mealsCount?: number;
   }) {
-    const result = await safeGenerateDietPlan({
-      ...params,
-      mealsCount: params.mealsCount || 5,
-    });
-    return result;
+    try {
+      const result = await multiAiOrchestrator.generateEnhancedDietPlan({
+        patientName: params.patientName,
+        objective: params.objective,
+        targetCalories: params.targetCalories,
+        macros: params.macros,
+        restrictions: params.restrictions ? [params.restrictions] : [],
+        preferences: params.preferences,
+        mealsCount: params.mealsCount || 5,
+      });
+      return { meals: result.meals, nutritional_summary: result.nutritional_summary };
+    } catch (err) {
+      console.warn('[AI Service] Multi-AI falhou, tentando Gemini direto:', err);
+      return safeGenerateDietPlan({ ...params, mealsCount: params.mealsCount || 5 });
+    }
   },
 
   generateGoals(objective: string, currentWeight: number): GoalSuggestion[] {
     if (!isGeminiConfigured()) {
-      return MOCK_GOALS.map(g => ({
-        ...g,
-        start_value: currentWeight,
-      }));
+      return MOCK_GOALS.map(g => ({ ...g, start_value: currentWeight }));
     }
-    return MOCK_GOALS.map(g => ({
-      ...g,
-      start_value: currentWeight,
-    }));
+    return MOCK_GOALS.map(g => ({ ...g, start_value: currentWeight }));
   },
 
   generateRecommendations(objective: string, restrictions: string[]): RecommendationSuggestion[] {
@@ -133,14 +138,13 @@ export const aiService = {
     return MOCK_RECOMMENDATIONS;
   },
 
-  async generateDiagnosis(anamneseData: Record<string, any>): Promise<DiagnosisResult> {
+  async generateDiagnosis(anamnesisData: Record<string, any>): Promise<DiagnosisResult> {
     if (!isGeminiConfigured()) {
       return MOCK_DIAGNOSIS;
     }
-    
     try {
       const { analyzeAnamnesis } = await import('@/lib/gemini');
-      const result = await analyzeAnamnesis(anamneseData);
+      const result = await analyzeAnamnesis(anamnesisData);
       return result;
     } catch (error) {
       console.error('[AI Service] Erro ao gerar diagnóstico:', error);
@@ -155,33 +159,64 @@ export const aiService = {
       { substance: 'Vitamina D3', dosage: '2000UI', timing: 'Café da manhã' },
       { substance: 'Ômega 3', dosage: '2g', timing: 'Almoço' },
     ];
-
     if (objective.includes('emagrecer') || objective.includes('Emagrecimento')) {
       suggestions.push(
         { substance: 'L-Carnitina', dosage: '500mg', timing: 'Antes do exercício' },
         { substance: 'Cafeína', dosage: '200mg', timing: 'Manhã' },
       );
     }
-
     if (objective.includes('hipertrofia') || objective.includes('muscular')) {
       suggestions.push(
         { substance: 'BCAA', dosage: '10g', timing: 'Antes/depois treino' },
         { substance: 'HMB', dosage: '3g', timing: 'Café da manhã' },
       );
     }
-
     if (restrictions.includes('lactose') || restrictions.includes('leite')) {
       suggestions.forEach(s => {
-        if (s.substance === 'Whey Protein') {
-          s.substance = 'Whey Protein Isolado';
-        }
+        if (s.substance === 'Whey Protein') s.substance = 'Whey Protein Isolado';
       });
     }
-
     return suggestions;
   },
 
   isConfigured(): boolean {
     return isGeminiConfigured();
+  },
+
+  // ─── Novos métodos Multi-API ──────────────────────────────
+
+  /** Analisa alimento usando múltiplas APIs em sintonia */
+  async analyzeFood(foodName: string, quantity: number = 100) {
+    return multiAiOrchestrator.analyzeFood(foodName, quantity);
+  },
+
+  /** Analisa humor do paciente (HF + Gemini trabalhando juntos) */
+  async analyzePatientMood(text: string) {
+    return multiAiOrchestrator.analyzePatientFeedback(text);
+  },
+
+  /** Busca receitas (Edamam) + informações nutricionais */
+  async searchRecipes(query: string, restrictions: string[] = []) {
+    return edamamProvider.searchRecipes(query, restrictions);
+  },
+
+  /** Busca alimento na base USDA oficial */
+  async searchFoodUSDA(query: string) {
+    return usdaProvider.searchFood(query);
+  },
+
+  /** Busca produto comercial por código de barras (Open Food Facts) */
+  async searchProductByBarcode(barcode: string) {
+    return offProvider.searchProduct(barcode);
+  },
+
+  /** Verifica status de todas as APIs */
+  getAiStatus() {
+    return multiAiOrchestrator.getStatus();
+  },
+
+  /** Analisa imagem de alimento (Hugging Face) */
+  async identifyFoodFromImage(imageUrl: string) {
+    return hfProvider.identifyFood(imageUrl);
   },
 };
